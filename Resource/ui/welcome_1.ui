@@ -1,0 +1,533 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>770</width>
+    <height>552</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <widget class="QStackedWidget" name="stackedWidget">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>20</y>
+     <width>741</width>
+     <height>501</height>
+    </rect>
+   </property>
+   <property name="currentIndex">
+    <number>0</number>
+   </property>
+   <widget class="QWidget" name="page_1">
+    <widget class="LargeTitleLabel" name="LargeTitleLabel">
+     <property name="geometry">
+      <rect>
+       <x>330</x>
+       <y>90</y>
+       <width>281</width>
+       <height>61</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>凌云班级组件！</string>
+     </property>
+     <property name="lightColor" stdset="0">
+      <color>
+       <red>0</red>
+       <green>0</green>
+       <blue>127</blue>
+      </color>
+     </property>
+    </widget>
+    <widget class="DisplayLabel" name="DisplayLabel">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>20</y>
+       <width>161</width>
+       <height>150</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="textFormat">
+      <enum>Qt::AutoText</enum>
+     </property>
+     <property name="pixmap">
+      <pixmap>../png/welcome.png</pixmap>
+     </property>
+     <property name="scaledContents">
+      <bool>true</bool>
+     </property>
+    </widget>
+    <widget class="StrongBodyLabel" name="StrongBodyLabel">
+     <property name="geometry">
+      <rect>
+       <x>280</x>
+       <y>475</y>
+       <width>271</width>
+       <height>19</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>接下来，会为您介绍本程序的大致功能。</string>
+     </property>
+    </widget>
+    <widget class="LargeTitleLabel" name="LargeTitleLabel_2">
+     <property name="geometry">
+      <rect>
+       <x>210</x>
+       <y>40</y>
+       <width>301</width>
+       <height>54</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>感谢您选择使用</string>
+     </property>
+    </widget>
+    <widget class="StrongBodyLabel" name="StrongBodyLabel_2">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>190</y>
+       <width>691</width>
+       <height>171</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt; font-weight:600;&quot;&gt;引言：&lt;/span&gt;&lt;/p&gt;&lt;p&gt;在寻找适合学校电脑的课程管理软件时，“凌云班级组件”脱颖而出。&lt;/p&gt;&lt;p&gt;它简洁直观，功能强大，完美融合课表与时间管理，成为学习生活的得力助手。&lt;/p&gt;&lt;p&gt;让每一刻学习都充满效率，陪伴你扬帆远航，成就学习新篇章。&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QWidget" name="page_2">
+    <widget class="LargeTitleLabel" name="LargeTitleLabel_3">
+     <property name="geometry">
+      <rect>
+       <x>140</x>
+       <y>15</y>
+       <width>241</width>
+       <height>54</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>软件亮点</string>
+     </property>
+    </widget>
+    <widget class="SmoothScrollArea" name="sm">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>70</y>
+       <width>741</width>
+       <height>391</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">background: transparent; border: none</string>
+     </property>
+     <property name="widgetResizable">
+      <bool>true</bool>
+     </property>
+     <widget class="QWidget" name="scrollAreaWidgetContents">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>741</width>
+        <height>391</height>
+       </rect>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout_7">
+       <item>
+        <widget class="ElevatedCardWidget" name="ElevatedCardWidget">
+         <property name="minimumSize">
+          <size>
+           <width>291</width>
+           <height>331</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>291</width>
+           <height>331</height>
+          </size>
+         </property>
+         <widget class="SubtitleLabel" name="SubtitleLabel_3">
+          <property name="geometry">
+           <rect>
+            <x>20</x>
+            <y>20</y>
+            <width>201</width>
+            <height>28</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>一键黑屏只显示时间</string>
+          </property>
+         </widget>
+         <widget class="BodyLabel" name="BodyLabel_3">
+          <property name="geometry">
+           <rect>
+            <x>30</x>
+            <y>60</y>
+            <width>241</width>
+            <height>161</height>
+           </rect>
+          </property>
+          <property name="frameShadow">
+           <enum>QFrame::Sunken</enum>
+          </property>
+          <property name="text">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;右键凌云软件的系统托盘图标 &lt;/p&gt;&lt;p&gt;您可以点击“开启黑屏”这样可以使电脑&lt;/p&gt;&lt;p&gt;保持黑底，只显示时间。当然，你也可&lt;/p&gt;&lt;p&gt;以选择“开启黑屏（不带时间）”。&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+          </property>
+         </widget>
+         <widget class="CaptionLabel" name="CaptionLabel_5">
+          <property name="geometry">
+           <rect>
+            <x>220</x>
+            <y>60</y>
+            <width>21</width>
+            <height>21</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="pixmap">
+           <pixmap>../../ico/LINGYUN.ico</pixmap>
+          </property>
+          <property name="scaledContents">
+           <bool>true</bool>
+          </property>
+          <property name="wordWrap">
+           <bool>false</bool>
+          </property>
+         </widget>
+         <widget class="CaptionLabel" name="CaptionLabel_6">
+          <property name="geometry">
+           <rect>
+            <x>30</x>
+            <y>190</y>
+            <width>231</width>
+            <height>121</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="pixmap">
+           <pixmap>../png/p1.png</pixmap>
+          </property>
+          <property name="scaledContents">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </widget>
+       </item>
+       <item>
+        <widget class="ElevatedCardWidget" name="ElevatedCardWidget_2">
+         <property name="minimumSize">
+          <size>
+           <width>391</width>
+           <height>331</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>391</width>
+           <height>331</height>
+          </size>
+         </property>
+         <widget class="SubtitleLabel" name="SubtitleLabel_4">
+          <property name="geometry">
+           <rect>
+            <x>20</x>
+            <y>20</y>
+            <width>201</width>
+            <height>28</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>全新的桌面课表组件</string>
+          </property>
+         </widget>
+         <widget class="BodyLabel" name="BodyLabel_4">
+          <property name="geometry">
+           <rect>
+            <x>30</x>
+            <y>60</y>
+            <width>231</width>
+            <height>201</height>
+           </rect>
+          </property>
+          <property name="frameShadow">
+           <enum>QFrame::Sunken</enum>
+          </property>
+          <property name="text">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;当桌面组件启用后，你可以发现在桌&lt;/p&gt;&lt;p&gt;面右侧有一些卡片。这些卡片背景为&lt;/p&gt;&lt;p&gt;渐变色，其中“今日课程”背景为焕彩&lt;/p&gt;&lt;p&gt;渐变色。课程表和时间线均可在设置&lt;/p&gt;&lt;p&gt;中进行修改，本向导接下来也会帮助&lt;/p&gt;&lt;p&gt;你完成一些设置。&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+          </property>
+         </widget>
+         <widget class="CaptionLabel" name="CaptionLabel_7">
+          <property name="geometry">
+           <rect>
+            <x>260</x>
+            <y>20</y>
+            <width>101</width>
+            <height>281</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="pixmap">
+           <pixmap>../png/p2.png</pixmap>
+          </property>
+          <property name="scaledContents">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+    <widget class="DisplayLabel" name="DisplayLabel_2">
+     <property name="geometry">
+      <rect>
+       <x>30</x>
+       <y>0</y>
+       <width>91</width>
+       <height>91</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="textFormat">
+      <enum>Qt::AutoText</enum>
+     </property>
+     <property name="pixmap">
+      <pixmap>../png/class.png</pixmap>
+     </property>
+     <property name="scaledContents">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QWidget" name="page_3">
+    <widget class="LargeTitleLabel" name="LargeTitleLabel_4">
+     <property name="geometry">
+      <rect>
+       <x>140</x>
+       <y>15</y>
+       <width>241</width>
+       <height>54</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>配置课程表</string>
+     </property>
+    </widget>
+    <widget class="StrongBodyLabel" name="StrongBodyLabel_3">
+     <property name="geometry">
+      <rect>
+       <x>30</x>
+       <y>100</y>
+       <width>461</width>
+       <height>101</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>配置课表和时间线是使用桌面组件的必要环节。
+你可以稍后打开设置，进行编辑和配置课表和时间线。
+
+*后期版本支持直接在该界面编辑，敬请期待。</string>
+     </property>
+    </widget>
+    <widget class="DisplayLabel" name="DisplayLabel_3">
+     <property name="geometry">
+      <rect>
+       <x>30</x>
+       <y>0</y>
+       <width>91</width>
+       <height>91</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="textFormat">
+      <enum>Qt::AutoText</enum>
+     </property>
+     <property name="pixmap">
+      <pixmap>../png/copybook.png</pixmap>
+     </property>
+     <property name="scaledContents">
+      <bool>true</bool>
+     </property>
+    </widget>
+    <widget class="StrongBodyLabel" name="StrongBodyLabel_5">
+     <property name="geometry">
+      <rect>
+       <x>30</x>
+       <y>190</y>
+       <width>621</width>
+       <height>101</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>另外，在课表中推荐使用“MiSans Bold”字体，
+桌面时间推荐使用“SF Soft UI”字体
+这两款字体为默认字体，无需二次配置。</string>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QWidget" name="page_4">
+    <widget class="DisplayLabel" name="DisplayLabel_4">
+     <property name="geometry">
+      <rect>
+       <x>30</x>
+       <y>0</y>
+       <width>91</width>
+       <height>91</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="textFormat">
+      <enum>Qt::AutoText</enum>
+     </property>
+     <property name="pixmap">
+      <pixmap>../png/check-mark.png</pixmap>
+     </property>
+     <property name="scaledContents">
+      <bool>true</bool>
+     </property>
+    </widget>
+    <widget class="LargeTitleLabel" name="LargeTitleLabel_5">
+     <property name="geometry">
+      <rect>
+       <x>140</x>
+       <y>15</y>
+       <width>241</width>
+       <height>54</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>部署完成</string>
+     </property>
+    </widget>
+    <widget class="StrongBodyLabel" name="StrongBodyLabel_4">
+     <property name="geometry">
+      <rect>
+       <x>30</x>
+       <y>80</y>
+       <width>461</width>
+       <height>101</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>恭喜您部署完成，开始使用凌云班级组件吧！</string>
+     </property>
+    </widget>
+   </widget>
+  </widget>
+  <widget class="PrimaryPushButton" name="next_button">
+   <property name="geometry">
+    <rect>
+     <x>590</x>
+     <y>490</y>
+     <width>153</width>
+     <height>32</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>继续</string>
+   </property>
+  </widget>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>PushButton</class>
+   <extends>QPushButton</extends>
+   <header>qfluentwidgets</header>
+  </customwidget>
+  <customwidget>
+   <class>PrimaryPushButton</class>
+   <extends>PushButton</extends>
+   <header>qfluentwidgets</header>
+  </customwidget>
+  <customwidget>
+   <class>CardWidget</class>
+   <extends>QFrame</extends>
+   <header>qfluentwidgets</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>ElevatedCardWidget</class>
+   <extends>SimpleCardWidget</extends>
+   <header>qfluentwidgets</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>SimpleCardWidget</class>
+   <extends>CardWidget</extends>
+   <header>qfluentwidgets</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>SmoothScrollArea</class>
+   <extends>QScrollArea</extends>
+   <header>qfluentwidgets</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>CaptionLabel</class>
+   <extends>QLabel</extends>
+   <header>qfluentwidgets</header>
+  </customwidget>
+  <customwidget>
+   <class>BodyLabel</class>
+   <extends>QLabel</extends>
+   <header>qfluentwidgets</header>
+  </customwidget>
+  <customwidget>
+   <class>StrongBodyLabel</class>
+   <extends>QLabel</extends>
+   <header>qfluentwidgets</header>
+  </customwidget>
+  <customwidget>
+   <class>SubtitleLabel</class>
+   <extends>QLabel</extends>
+   <header>qfluentwidgets</header>
+  </customwidget>
+  <customwidget>
+   <class>LargeTitleLabel</class>
+   <extends>QLabel</extends>
+   <header>qfluentwidgets</header>
+  </customwidget>
+  <customwidget>
+   <class>DisplayLabel</class>
+   <extends>QLabel</extends>
+   <header>qfluentwidgets</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

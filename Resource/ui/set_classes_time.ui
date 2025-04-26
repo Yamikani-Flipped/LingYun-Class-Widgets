@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>716</width>
-    <height>773</height>
+    <width>809</width>
+    <height>831</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -35,148 +35,402 @@
    <item row="0" column="0">
     <widget class="TitleLabel" name="TitleLabel">
      <property name="text">
-      <string>编辑课表的时间线</string>
+      <string>时间线编辑</string>
      </property>
     </widget>
    </item>
    <item row="1" column="0">
-    <layout class="QGridLayout" name="gridLayout_4">
-     <item row="0" column="0">
-      <widget class="ListWidget" name="ListWidget">
-       <property name="maximumSize">
-        <size>
-         <width>140</width>
-         <height>16777215</height>
-        </size>
-       </property>
+    <widget class="SmoothScrollArea" name="sm">
+     <property name="styleSheet">
+      <string notr="true">background: transparent; border: none</string>
+     </property>
+     <property name="widgetResizable">
+      <bool>true</bool>
+     </property>
+     <widget class="QWidget" name="scrollAreaWidgetContents">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>761</width>
+        <height>763</height>
+       </rect>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout_7">
        <item>
-        <property name="text">
-         <string>新建项目</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>新建项目</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>新建项目</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>新建项目</string>
-        </property>
-       </item>
-      </widget>
-     </item>
-     <item row="0" column="1">
-      <layout class="QVBoxLayout" name="verticalLayout">
-       <item>
-        <widget class="CardWidget" name="CardWidget">
-         <layout class="QHBoxLayout" name="horizontalLayout_2">
-          <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_3">
-            <item>
-             <widget class="BodyLabel" name="BodyLabel">
-              <property name="text">
-               <string>添加时间线</string>
+        <layout class="QHBoxLayout" name="horizontalLayout_6">
+         <property name="leftMargin">
+          <number>5</number>
+         </property>
+         <property name="topMargin">
+          <number>15</number>
+         </property>
+         <property name="rightMargin">
+          <number>5</number>
+         </property>
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout_7">
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout">
+             <item>
+              <widget class="BodyLabel" name="BodyLabel_10">
+               <property name="text">
+                <string>时间线：</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="ComboBox" name="week_ComboBox">
+               <property name="styleSheet">
+                <string notr="true">ComboBox {
+    border: 1px solid rgba(0, 0, 0, 0.073);
+    border-radius: 5px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.183);
+    padding: 5px 31px 6px 11px;
+    /* font: 14px 'Segoe UI', 'Microsoft YaHei', 'PingFang SC'; */
+    color: black;
+    background-color: rgba(255, 255, 255, 0.7);
+    text-align: left;
+    outline: none;
+}
+
+ComboBox:hover {
+    background-color: rgba(249, 249, 249, 0.5);
+}
+
+ComboBox:pressed {
+    background-color: rgba(249, 249, 249, 0.3);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.073);
+    color: rgba(0, 0, 0, 0.63);
+}
+
+ComboBox:disabled {
+    color: rgba(0, 0, 0, 0.36);
+    background: rgba(249, 249, 249, 0.3);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+ComboBox[isPlaceholderText=true] {
+    color: rgba(0, 0, 0, 0.6063);
+}</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <widget class="ListWidget" name="ListWidget_time">
+             <property name="enabled">
+              <bool>true</bool>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>120</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>150</width>
+               <height>16777215</height>
+              </size>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout">
+           <item>
+            <widget class="SubtitleLabel" name="SubtitleLabel">
+             <property name="text">
+              <string>添加</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="CardWidget" name="CardWidget1">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>70</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>70</height>
+              </size>
+             </property>
+             <layout class="QHBoxLayout" name="horizontalLayout_8">
+              <property name="leftMargin">
+               <number>15</number>
               </property>
-             </widget>
-            </item>
-            <item>
-             <layout class="QFormLayout" name="formLayout">
-              <item row="0" column="0">
-               <widget class="BodyLabel" name="BodyLabel_3">
+              <property name="topMargin">
+               <number>15</number>
+              </property>
+              <property name="rightMargin">
+               <number>15</number>
+              </property>
+              <property name="bottomMargin">
+               <number>15</number>
+              </property>
+              <item>
+               <layout class="QVBoxLayout" name="verticalLayout_5">
+                <property name="spacing">
+                 <number>0</number>
+                </property>
+                <item>
+                 <widget class="StrongBodyLabel" name="add_label_1">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="text">
+                   <string>添加午别</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="CaptionLabel" name="add_label_2">
+                  <property name="text">
+                   <string>比如“上午”“下午”</string>
+                  </property>
+                  <property name="wordWrap">
+                   <bool>true</bool>
+                  </property>
+                  <property name="lightColor" stdset="0">
+                   <color alpha="150">
+                    <red>0</red>
+                    <green>0</green>
+                    <blue>0</blue>
+                   </color>
+                  </property>
+                  <property name="darkColor" stdset="0">
+                   <color alpha="200">
+                    <red>255</red>
+                    <green>255</green>
+                    <blue>255</blue>
+                   </color>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_2">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
+               <widget class="ComboBox" name="name_box">
                 <property name="text">
-                 <string>从</string>
+                 <string>请选择</string>
                 </property>
                </widget>
               </item>
-              <item row="0" column="1">
-               <widget class="TimePicker" name="TimePicker">
+              <item>
+               <widget class="BodyLabel" name="name_label">
+                <property name="text">
+                 <string>名称：</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="TextEdit" name="name_edit">
                 <property name="minimumSize">
                  <size>
-                  <width>240</width>
-                  <height>30</height>
+                  <width>0</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>80</width>
+                  <height>35</height>
                  </size>
                 </property>
                </widget>
               </item>
-              <item row="1" column="0">
-               <widget class="BodyLabel" name="BodyLabel_4">
+              <item>
+               <widget class="PushButton" name="add_Button">
                 <property name="text">
-                 <string>到</string>
+                 <string>确定</string>
                 </property>
-               </widget>
-              </item>
-              <item row="1" column="1">
-               <widget class="TimePicker" name="TimePicker_4">
-                <property name="minimumSize">
-                 <size>
-                  <width>240</width>
-                  <height>30</height>
-                 </size>
+                <property name="icon">
+                 <iconset theme="DELETE">
+                  <normaloff>C:/Users/username</normaloff>C:/Users/username</iconset>
+                </property>
+                <property name="hasIcon" stdset="0">
+                 <bool>false</bool>
                 </property>
                </widget>
               </item>
              </layout>
-            </item>
-           </layout>
-          </item>
-          <item>
-           <spacer name="horizontalSpacer_2">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-          <item>
-           <widget class="PrimaryPushButton" name="PrimaryPushButton">
-            <property name="minimumSize">
-             <size>
-              <width>80</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="text">
-             <string>添加</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </widget>
-       </item>
-       <item>
-        <widget class="CardWidget" name="CardWidget_2">
-         <layout class="QHBoxLayout" name="horizontalLayout_4">
-          <item>
-           <layout class="QVBoxLayout" name="verticalLayout_3">
-            <item>
-             <widget class="BodyLabel" name="BodyLabel_2">
-              <property name="text">
-               <string>相关操作</string>
+            </widget>
+           </item>
+           <item>
+            <widget class="CardWidget" name="CardWidget2">
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>120</height>
+              </size>
+             </property>
+             <layout class="QHBoxLayout" name="horizontalLayout_2">
+              <property name="leftMargin">
+               <number>15</number>
               </property>
-             </widget>
-            </item>
-            <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_5">
+              <property name="topMargin">
+               <number>15</number>
+              </property>
+              <property name="rightMargin">
+               <number>15</number>
+              </property>
+              <property name="bottomMargin">
+               <number>15</number>
+              </property>
               <item>
-               <widget class="ToolButton" name="ToolButton">
-                <property name="text">
-                 <string/>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="PrimaryToolButton" name="PrimaryToolButton"/>
+               <layout class="QVBoxLayout" name="verticalLayout_2">
+                <item>
+                 <widget class="BodyLabel" name="BodyLabel_3">
+                  <property name="font">
+                   <font>
+                    <family>微软雅黑</family>
+                    <pointsize>11</pointsize>
+                    <weight>75</weight>
+                    <bold>true</bold>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>添加时间线</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <layout class="QFormLayout" name="formLayout_2">
+                  <item row="0" column="0">
+                   <layout class="QFormLayout" name="formLayout_3">
+                    <item row="0" column="0">
+                     <widget class="BodyLabel" name="BodyLabel_6">
+                      <property name="text">
+                       <string>从</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="0" column="1">
+                     <widget class="TimePicker" name="TimePicker_from">
+                      <property name="minimumSize">
+                       <size>
+                        <width>240</width>
+                        <height>30</height>
+                       </size>
+                      </property>
+                      <property name="text">
+                       <string/>
+                      </property>
+                      <property name="secondVisible">
+                       <bool>false</bool>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="1" column="0">
+                     <widget class="BodyLabel" name="BodyLabel_7">
+                      <property name="text">
+                       <string>到</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="1" column="1">
+                     <widget class="TimePicker" name="TimePicker_to">
+                      <property name="minimumSize">
+                       <size>
+                        <width>240</width>
+                        <height>30</height>
+                       </size>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </item>
+                  <item row="0" column="1">
+                   <layout class="QVBoxLayout" name="verticalLayout_3">
+                    <item>
+                     <spacer name="verticalSpacer_2">
+                      <property name="orientation">
+                       <enum>Qt::Vertical</enum>
+                      </property>
+                      <property name="sizeHint" stdset="0">
+                       <size>
+                        <width>20</width>
+                        <height>40</height>
+                       </size>
+                      </property>
+                     </spacer>
+                    </item>
+                    <item>
+                     <layout class="QHBoxLayout" name="horizontalLayout_5">
+                      <item>
+                       <widget class="BodyLabel" name="BodyLabel_5">
+                        <property name="text">
+                         <string>添加到</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="ComboBox" name="add_name_box">
+                        <property name="text">
+                         <string>请选择</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <spacer name="horizontalSpacer_4">
+                        <property name="orientation">
+                         <enum>Qt::Horizontal</enum>
+                        </property>
+                        <property name="sizeHint" stdset="0">
+                         <size>
+                          <width>40</width>
+                          <height>20</height>
+                         </size>
+                        </property>
+                       </spacer>
+                      </item>
+                     </layout>
+                    </item>
+                    <item>
+                     <spacer name="verticalSpacer_3">
+                      <property name="orientation">
+                       <enum>Qt::Vertical</enum>
+                      </property>
+                      <property name="sizeHint" stdset="0">
+                       <size>
+                        <width>20</width>
+                        <height>40</height>
+                       </size>
+                      </property>
+                     </spacer>
+                    </item>
+                   </layout>
+                  </item>
+                 </layout>
+                </item>
+               </layout>
               </item>
               <item>
                <spacer name="horizontalSpacer_3">
@@ -191,33 +445,326 @@
                 </property>
                </spacer>
               </item>
+              <item>
+               <widget class="PrimaryPushButton" name="addtime_Button">
+                <property name="minimumSize">
+                 <size>
+                  <width>80</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>添加</string>
+                </property>
+                <property name="hasIcon" stdset="0">
+                 <bool>false</bool>
+                </property>
+               </widget>
+              </item>
              </layout>
-            </item>
-           </layout>
-          </item>
-         </layout>
-        </widget>
-       </item>
-       <item>
-        <spacer name="verticalSpacer">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>40</height>
-          </size>
-         </property>
-        </spacer>
+            </widget>
+           </item>
+           <item>
+            <widget class="SubtitleLabel" name="edit_Label">
+             <property name="text">
+              <string>编辑</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="CardWidget" name="CardWidget4">
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>120</height>
+              </size>
+             </property>
+             <layout class="QHBoxLayout" name="horizontalLayout_3">
+              <property name="leftMargin">
+               <number>15</number>
+              </property>
+              <property name="topMargin">
+               <number>15</number>
+              </property>
+              <property name="rightMargin">
+               <number>15</number>
+              </property>
+              <property name="bottomMargin">
+               <number>15</number>
+              </property>
+              <item>
+               <layout class="QVBoxLayout" name="verticalLayout_4">
+                <item>
+                 <widget class="BodyLabel" name="BodyLabel_4">
+                  <property name="font">
+                   <font>
+                    <family>微软雅黑</family>
+                    <pointsize>11</pointsize>
+                    <weight>75</weight>
+                    <bold>true</bold>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>编辑时间线</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <layout class="QFormLayout" name="formLayout_4">
+                  <item row="0" column="0">
+                   <layout class="QFormLayout" name="formLayout_5">
+                    <item row="0" column="0">
+                     <widget class="BodyLabel" name="BodyLabel_8">
+                      <property name="text">
+                       <string>从</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="0" column="1">
+                     <widget class="TimePicker" name="TimePicker_from_edit">
+                      <property name="minimumSize">
+                       <size>
+                        <width>240</width>
+                        <height>30</height>
+                       </size>
+                      </property>
+                      <property name="text">
+                       <string/>
+                      </property>
+                      <property name="secondVisible">
+                       <bool>false</bool>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="1" column="0">
+                     <widget class="BodyLabel" name="BodyLabel_9">
+                      <property name="text">
+                       <string>到</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="1" column="1">
+                     <widget class="TimePicker" name="TimePicker_to_edit">
+                      <property name="minimumSize">
+                       <size>
+                        <width>240</width>
+                        <height>30</height>
+                       </size>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </item>
+                 </layout>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_6">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
+               <widget class="PrimaryPushButton" name="edit_Button">
+                <property name="minimumSize">
+                 <size>
+                  <width>80</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>修改</string>
+                </property>
+                <property name="hasIcon" stdset="0">
+                 <bool>false</bool>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="SubtitleLabel" name="SubtitleLabel_2">
+             <property name="text">
+              <string>其他操作</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="CardWidget" name="CardWidget3">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>70</height>
+              </size>
+             </property>
+             <layout class="QHBoxLayout" name="horizontalLayout_4">
+              <property name="leftMargin">
+               <number>15</number>
+              </property>
+              <property name="topMargin">
+               <number>15</number>
+              </property>
+              <property name="rightMargin">
+               <number>15</number>
+              </property>
+              <property name="bottomMargin">
+               <number>15</number>
+              </property>
+              <item>
+               <widget class="PushButton" name="cancel_Button">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="text">
+                 <string>取消选中</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="PushButton" name="del_Button">
+                <property name="text">
+                 <string>删除该项</string>
+                </property>
+                <property name="icon">
+                 <iconset theme="DELETE">
+                  <normaloff>C:/Users/username</normaloff>C:/Users/username</iconset>
+                </property>
+                <property name="hasIcon" stdset="0">
+                 <bool>false</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="VerticalSeparator" name="VerticalSeparator"/>
+              </item>
+              <item>
+               <layout class="QVBoxLayout" name="verticalLayout_6">
+                <item>
+                 <widget class="BodyLabel" name="BodyLabel_2">
+                  <property name="text">
+                   <string>本时间段屏蔽节数计数</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="CaptionLabel" name="CaptionLabel">
+                  <property name="text">
+                   <string>即本时间段前面不显示节数</string>
+                  </property>
+                  <property name="lightColor" stdset="0">
+                   <color>
+                    <red>129</red>
+                    <green>129</green>
+                    <blue>129</blue>
+                   </color>
+                  </property>
+                  <property name="darkColor" stdset="0">
+                   <color>
+                    <red>145</red>
+                    <green>145</green>
+                    <blue>145</blue>
+                   </color>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <widget class="SwitchButton" name="Counter_SwitchButton">
+                <property name="enabled">
+                 <bool>true</bool>
+                </property>
+                <property name="onText">
+                 <string>开</string>
+                </property>
+                <property name="offText">
+                 <string>关</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="BodyLabel" name="BodyLabel">
+             <property name="text">
+              <string>提示：当您完成了对时间线的编辑时，应重启本软件以让课表全局同步，然后你可以继续编辑课表。如果你需要对已经现有的时间进行修改，请先选择需要修改的时间段。
+
+注意：如果你要删除时间线，那么如果给一个星期中单独某天进行特别定义过，那么在删除时不会删除你特别定义的时间线，你还需要删除特别定义的时间线（删除的判断方法是需要删除的时间线和现有的时间线进行判断，如果相同，那么删除）后续可能会进行优化。</string>
+             </property>
+             <property name="textFormat">
+              <enum>Qt::PlainText</enum>
+             </property>
+             <property name="wordWrap">
+              <bool>true</bool>
+             </property>
+             <property name="lightColor" stdset="0">
+              <color>
+               <red>111</red>
+               <green>111</green>
+               <blue>111</blue>
+              </color>
+             </property>
+             <property name="darkColor" stdset="0">
+              <color>
+               <red>179</red>
+               <green>179</green>
+               <blue>179</blue>
+              </color>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="verticalSpacer">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>40</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </item>
+        </layout>
        </item>
       </layout>
-     </item>
-    </layout>
+     </widget>
+    </widget>
    </item>
   </layout>
  </widget>
  <customwidgets>
+  <customwidget>
+   <class>ComboBox</class>
+   <extends>QPushButton</extends>
+   <header>qfluentwidgets</header>
+  </customwidget>
   <customwidget>
    <class>PushButton</class>
    <extends>QPushButton</extends>
@@ -229,13 +776,13 @@
    <header>qfluentwidgets</header>
   </customwidget>
   <customwidget>
-   <class>ToolButton</class>
-   <extends>QToolButton</extends>
+   <class>SwitchButton</class>
+   <extends>QWidget</extends>
    <header>qfluentwidgets</header>
   </customwidget>
   <customwidget>
-   <class>PrimaryToolButton</class>
-   <extends>ToolButton</extends>
+   <class>VerticalSeparator</class>
+   <extends>QWidget</extends>
    <header>qfluentwidgets</header>
   </customwidget>
   <customwidget>
@@ -245,8 +792,19 @@
    <container>1</container>
   </customwidget>
   <customwidget>
+   <class>SmoothScrollArea</class>
+   <extends>QScrollArea</extends>
+   <header>qfluentwidgets</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
    <class>TimePicker</class>
    <extends>QPushButton</extends>
+   <header>qfluentwidgets</header>
+  </customwidget>
+  <customwidget>
+   <class>CaptionLabel</class>
+   <extends>QLabel</extends>
    <header>qfluentwidgets</header>
   </customwidget>
   <customwidget>
@@ -255,8 +813,23 @@
    <header>qfluentwidgets</header>
   </customwidget>
   <customwidget>
+   <class>StrongBodyLabel</class>
+   <extends>QLabel</extends>
+   <header>qfluentwidgets</header>
+  </customwidget>
+  <customwidget>
+   <class>SubtitleLabel</class>
+   <extends>QLabel</extends>
+   <header>qfluentwidgets</header>
+  </customwidget>
+  <customwidget>
    <class>TitleLabel</class>
    <extends>QLabel</extends>
+   <header>qfluentwidgets</header>
+  </customwidget>
+  <customwidget>
+   <class>TextEdit</class>
+   <extends>QTextEdit</extends>
    <header>qfluentwidgets</header>
   </customwidget>
   <customwidget>

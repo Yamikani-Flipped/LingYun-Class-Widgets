@@ -123,10 +123,13 @@
              </item>
              <item row="1" column="1">
               <layout class="QVBoxLayout" name="verticalLayout_3">
+               <property name="leftMargin">
+                <number>15</number>
+               </property>
                <item>
                 <widget class="SubtitleLabel" name="Title">
                  <property name="text">
-                  <string>凌云班级时间</string>
+                  <string>凌云班级组件</string>
                  </property>
                  <property name="alignment">
                   <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
@@ -136,7 +139,7 @@
                <item>
                 <widget class="CaptionLabel" name="English_name">
                  <property name="text">
-                  <string>LingYun Class Times</string>
+                  <string>LingYun Class Widgets</string>
                  </property>
                  <property name="alignment">
                   <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
@@ -160,17 +163,34 @@
                 </widget>
                </item>
                <item>
-                <widget class="BodyLabel" name="version">
-                 <property name="text">
-                  <string>当前版本：未知</string>
-                 </property>
-                 <property name="alignment">
-                  <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-                 </property>
-                 <property name="wordWrap">
-                  <bool>true</bool>
-                 </property>
-                </widget>
+                <layout class="QHBoxLayout" name="horizontalLayout">
+                 <item>
+                  <widget class="BodyLabel" name="version">
+                   <property name="text">
+                    <string>当前版本：未知</string>
+                   </property>
+                   <property name="alignment">
+                    <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+                   </property>
+                   <property name="wordWrap">
+                    <bool>true</bool>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="BodyLabel" name="yun_version">
+                   <property name="text">
+                    <string>最新版本：未知</string>
+                   </property>
+                   <property name="alignment">
+                    <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+                   </property>
+                   <property name="wordWrap">
+                    <bool>true</bool>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
                </item>
                <item>
                 <widget class="BodyLabel" name="copyright">
@@ -378,7 +398,7 @@
                 </size>
                </property>
                <property name="text">
-                <string>开发者 bilibili 主页</string>
+                <string>凌云 bilibili 主页</string>
                </property>
               </widget>
              </item>
@@ -429,6 +449,46 @@
           <size>
            <width>20</width>
            <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="BodyLabel" name="copyright_2">
+         <property name="text">
+          <string>本软件部分图标来自Icons8，桌面卡片灵感来自Class Widgets</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+         <property name="lightColor" stdset="0">
+          <color>
+           <red>158</red>
+           <green>158</green>
+           <blue>158</blue>
+          </color>
+         </property>
+         <property name="darkColor" stdset="0">
+          <color>
+           <red>182</red>
+           <green>182</green>
+           <blue>182</blue>
+          </color>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer_2">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
           </size>
          </property>
         </spacer>

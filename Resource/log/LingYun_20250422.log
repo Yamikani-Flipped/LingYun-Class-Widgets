@@ -1,0 +1,6 @@
+2025-04-22 12:54:36,642 - LingYun_Logger - ERROR - Uncaught exception: <class 'AttributeError'>
+'NoneType' object has no attribute 'addItems'
+<traceback object at 0x000002009D317040>
+2025-04-22 12:57:15,819 - LingYun_Logger - ERROR - Uncaught exception: <class 'AttributeError'>
+'NoneType' object has no attribute 'addItems'
+<traceback object at 0x000002FA14541800>
