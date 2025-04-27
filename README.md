@@ -10,6 +10,7 @@
 
 [点击这里](https://space.bilibili.com/627622081) 进入我的bilibili
 
+# 在此对于说明改版于Class Widgets的，再次说明：只是使用了相同的框架（技术栈）可以对比代码，风格和顺序是完全不一样的，请对比后再说！
 
 
 提示：本作品在部分地方使用了Class Widgets的部分代码，该仓库地址：https://github.com/Class-Widgets/Class-Widgets ，并且会在v1.5.8版（待发布）中【设置->关于本软件->致谢】中详细说明。
