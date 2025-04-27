@@ -10,6 +10,6 @@
 
 [点击这里](https://space.bilibili.com/627622081) 进入我的bilibili
 
-先写这么多。
 
-注意：本作品在提醒波澜的效果中使用了Class Widgets的部分代码，该仓库地址：https://github.com/Class-Widgets/Class-Widgets
+
+提示：本作品在部分地方使用了Class Widgets的部分代码，该仓库地址：https://github.com/Class-Widgets/Class-Widgets，并且会在v1.5.8版（待发布）中【设置->关于本软件->致谢】中详细说明。
