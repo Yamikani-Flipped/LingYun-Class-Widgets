@@ -12,4 +12,4 @@
 
 
 
-提示：本作品在部分地方使用了Class Widgets的部分代码，该仓库地址：https://github.com/Class-Widgets/Class-Widgets，并且会在v1.5.8版（待发布）中【设置->关于本软件->致谢】中详细说明。
+提示：本作品在部分地方使用了Class Widgets的部分代码，该仓库地址：https://github.com/Class-Widgets/Class-Widgets ，并且会在v1.5.8版（待发布）中【设置->关于本软件->致谢】中详细说明。
