@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>475</width>
-    <height>761</height>
+    <width>476</width>
+    <height>500</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,8 +16,8 @@
   <widget class="TitleLabel" name="lingyun_class">
    <property name="geometry">
     <rect>
-     <x>20</x>
-     <y>370</y>
+     <x>10</x>
+     <y>50</y>
      <width>211</width>
      <height>38</height>
     </rect>
@@ -46,10 +46,10 @@
   <widget class="SmoothScrollArea" name="sd_scroll">
    <property name="geometry">
     <rect>
-     <x>260</x>
-     <y>375</y>
+     <x>250</x>
+     <y>55</y>
      <width>191</width>
-     <height>361</height>
+     <height>421</height>
     </rect>
    </property>
    <property name="styleSheet">
@@ -64,7 +64,7 @@
       <x>0</x>
       <y>0</y>
       <width>191</width>
-      <height>361</height>
+      <height>421</height>
      </rect>
     </property>
     <layout class="QVBoxLayout" name="verticalLayout_9">
@@ -125,8 +125,8 @@
   <widget class="QLabel" name="lingyun_background">
    <property name="geometry">
     <rect>
-     <x>20</x>
-     <y>337</y>
+     <x>10</x>
+     <y>17</y>
      <width>211</width>
      <height>86</height>
     </rect>
@@ -146,8 +146,8 @@ border-radius: 10px</string>
   <widget class="QLabel" name="lingyun_Title">
    <property name="geometry">
     <rect>
-     <x>20</x>
-     <y>342</y>
+     <x>10</x>
+     <y>22</y>
      <width>211</width>
      <height>31</height>
     </rect>
@@ -177,8 +177,8 @@ font-weight: bold;</string>
   <widget class="TitleLabel" name="lingyun_down">
    <property name="geometry">
     <rect>
-     <x>22</x>
-     <y>468</y>
+     <x>12</x>
+     <y>148</y>
      <width>211</width>
      <height>38</height>
     </rect>
@@ -201,8 +201,8 @@ font-weight: bold;</string>
   <widget class="ProgressBar" name="lingyun_Bar">
    <property name="geometry">
     <rect>
-     <x>35</x>
-     <y>510</y>
+     <x>25</x>
+     <y>190</y>
      <width>180</width>
      <height>5</height>
     </rect>
@@ -235,10 +235,10 @@ font-weight: bold;</string>
   <widget class="QLabel" name="todayclass_background">
    <property name="geometry">
     <rect>
-     <x>250</x>
-     <y>335</y>
+     <x>240</x>
+     <y>15</y>
      <width>211</width>
-     <height>415</height>
+     <height>461</height>
     </rect>
    </property>
    <property name="styleSheet">
@@ -254,8 +254,8 @@ border-radius: 10px</string>
   <widget class="QLabel" name="todayclass_Title">
    <property name="geometry">
     <rect>
-     <x>250</x>
-     <y>340</y>
+     <x>240</x>
+     <y>20</y>
      <width>211</width>
      <height>31</height>
     </rect>
@@ -285,8 +285,8 @@ font-weight: bold;</string>
   <widget class="QLabel" name="lingyun_background_2">
    <property name="geometry">
     <rect>
-     <x>20</x>
-     <y>437</y>
+     <x>10</x>
+     <y>117</y>
      <width>211</width>
      <height>90</height>
     </rect>
@@ -303,8 +303,8 @@ border-radius: 10px</string>
   <widget class="QLabel" name="lingyun_Title_2">
    <property name="geometry">
     <rect>
-     <x>22</x>
-     <y>442</y>
+     <x>12</x>
+     <y>122</y>
      <width>211</width>
      <height>31</height>
     </rect>
@@ -334,10 +334,10 @@ font-weight: bold;</string>
   <widget class="SmoothScrollArea" name="sd_scroll_2">
    <property name="geometry">
     <rect>
-     <x>30</x>
-     <y>55</y>
-     <width>421</width>
-     <height>251</height>
+     <x>10</x>
+     <y>265</y>
+     <width>211</width>
+     <height>211</height>
     </rect>
    </property>
    <property name="styleSheet">
@@ -351,8 +351,8 @@ font-weight: bold;</string>
      <rect>
       <x>0</x>
       <y>0</y>
-      <width>421</width>
-      <height>251</height>
+      <width>211</width>
+      <height>211</height>
      </rect>
     </property>
     <layout class="QVBoxLayout" name="verticalLayout_10">
@@ -413,9 +413,9 @@ font-weight: bold;</string>
   <widget class="QLabel" name="duty_Title">
    <property name="geometry">
     <rect>
-     <x>20</x>
-     <y>20</y>
-     <width>441</width>
+     <x>10</x>
+     <y>230</y>
+     <width>211</width>
      <height>31</height>
     </rect>
    </property>
@@ -444,15 +444,16 @@ font-weight: bold;</string>
   <widget class="QLabel" name="duty_background">
    <property name="geometry">
     <rect>
-     <x>20</x>
-     <y>15</y>
-     <width>441</width>
-     <height>301</height>
+     <x>10</x>
+     <y>225</y>
+     <width>211</width>
+     <height>251</height>
     </rect>
    </property>
    <property name="styleSheet">
-    <string notr="true">background-color: qconicalgradient(cx:0.506, cy:1, angle:202.5, stop:0.255682 rgba(129, 52, 225, 255), stop:0.761364 rgba(255, 255, 255, 255));
-border-radius: 8px</string>
+    <string notr="true">background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:1, y2:0, stop:0 rgba(255, 225, 245, 255), stop:1 rgba(255, 255, 255, 255));
+
+border-radius: 10px</string>
    </property>
    <property name="text">
     <string/>

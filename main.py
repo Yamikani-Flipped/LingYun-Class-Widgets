@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import sys, os, logging, winreg as reg, webbrowser, warnings, json,threading,ast,time,requests,simpleaudio as sa
+import sys, os, logging, winreg as reg, webbrowser, warnings, json,threading,ast,time,requests,simpleaudio as sa,yaml,shutil,psutil
 from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
 from PyQt5 import uic
 from PyQt5.QtCore import *
@@ -14,7 +14,7 @@ from qfluentwidgets import (
     setThemeColor,setTheme,SmoothScrollArea,TitleLabel,ProgressBar,StrongBodyLabel,
     MessageBox,Dialog,ListWidget,TextEdit,ComboBox,TimePicker,PrimaryPushButton,
     CalendarPicker,LineEdit,PasswordLineEdit,IconInfoBadge,IndeterminateProgressBar,
-    Flyout,FlyoutAnimationType,Theme,qconfig)
+    Flyout,FlyoutAnimationType,Theme,qconfig,RadioButton)
 from qframelesswindow.utils import getSystemAccentColor
 from qframelesswindow import TitleBar,AcrylicWindow
 from packaging import version
@@ -26,12 +26,12 @@ from Crypto.Random import get_random_bytes"""
 
 
 warnings.filterwarnings("ignore", category=DeprecationWarning) # 忽略警告
-Version = '1.5.7'
+Version = '1.5.9'
 Version_Parse = version.parse(Version)
 # 获取当前完整路径,获取当前文件名（os.path.basename(sys.argv[0])获得的是exe名字）
 script_dir = sys.argv[0].replace(os.path.basename(sys.argv[0]),"")
 script_full_path = sys.argv[0]
-os.chdir(script_dir)# 切换工作目录wys
+os.chdir(script_dir)# 切换工作目录
 
 
 
@@ -40,10 +40,13 @@ os.chdir(script_dir)# 切换工作目录wys
 # 初始化程序整体
 class Initialization():
     def __init__(self):
-        self.init()
+        pass
+        #self.init()
     def init(self):
         global theme_manager,theme,clock,tops,warn,DP_Comonent,Ripple,gl_weekday,cloud_sync,adj_weekday#,yun_warn
         
+
+
         # 检测是否完成云同步变量
         cloud_sync = False
 
@@ -96,6 +99,16 @@ class Initialization():
             lists['close_sets'] == True
             clock.hide()
 
+        if os.path.exists(f"Resource/ui/dp/{config.get('dp_choose')}") == False:
+            config['dp_choose'] = "class_dp0.ui"
+            config['dp_display_edge'] = '510'
+            self.write_to_registry("dp_choose","class_dp0.ui")
+            self.write_to_registry("dp_display_edge","510")
+
+            
+
+
+
 
     
         # 创建托盘图标
@@ -110,7 +123,7 @@ class Initialization():
 
 
     def get_datas(self):
-        global lists,config,class_weekday,gl_weekday,class_dan,up_work #datas
+        global lists,config,class_weekday,gl_weekday,class_dan,up_work,default_class
 
         up_work = False
         
@@ -162,6 +175,7 @@ class Initialization():
                   'dp_drup_audio' : 'False', #是否播放提醒音频
                   'dp_audio_s' : "4", # 提醒的延迟秒数
                   'dp_xiping' : 'True', #是否息屏开启桌面组件
+                  'dp_widgets' : "default.json", # 选择使用的json文件
 
 
                   'comboBox': '桌面',
@@ -216,50 +230,18 @@ class Initialization():
             if registry_value is not None:
                 config[key] = registry_value
 
-
-        """da tas = {}
-        for key in data:
-            default_value = data[key]
-            registry_value = self.read_from_registry(key, default_value)
-            if registry_value is not None:
-                da tas[key] = registry_value"""
-
         lists = {'close_sets' : False, # 设置是否关闭（主要处理关闭事件）
                  "widgets_on" : False, # 设置窗口的编辑时间线是否打开
                  "click_Counter" : False, # 设置时间线的屏蔽节数计数
                  }
         
-        
-        # 尝试从文件加载数据，如果文件不存在则使用默认值
-        '''if config.get("dp_biweekly") == "True":
-            start_date = datetime.strptime(config.get('dp_danweekly'), "%Y,%m,%d")
-            current_date = datetime.now()
-            current_monday = current_date - timedelta(days=current_date.weekday())
-            start_monday = start_date - timedelta(days=start_date.weekday())
-            delta = current_monday - start_monday
-            weeks_diff = delta.days // 7
-            if weeks_diff % 2 == 0:
-                class_table = self.load_from_json('class_table_a.json', default_class_table_a)
-                class_time = self.load_from_json('class_time_a.json', default_class_time_a)
-                class_dan = "单周"
-            else:
-                class_table = self.load_from_json('class_table_b.json', default_class_table_b)
-                class_time = self.load_from_json('class_time_b.json', default_class_time_b)
-                class_dan = "双周"
-        else:
-            class_table = self.load_from_json('class_table_a.json', default_class_table_a)
-            class_time = self.load_from_json('class_time_a.json', default_class_time_a)
-        
-        class_ORD_Filtration = self.load_from_json('class_ORD_Filtration.json', default_class_ORD_Filtration)
-        duty_table = self.load_from_json('duty_table.json', default_duty_table)'''
-        
-        self.load_data(default_class)
+        self.load_data()
 
-    def load_data(self,default_class):
+    def load_data(self):
         global class_all,class_ORD_Filtration, class_table, class_time, duty_table, class_dan,class_table_a,class_table_b,class_time_a,class_time_b,class_time_a,class_time_b
 
         # 从文件加载数据 json
-        class_all = self.loads_from_json(-1, default_class)
+        class_all = self.loads_from_json(-1)
         class_ORD_Filtration = class_all[0]
         class_table_a = class_all[1]
         class_table_b = class_all[2]
@@ -599,10 +581,11 @@ class Initialization():
             #self.save_to_json(default_data, filename)
             return default_data
         
-    def loads_from_json(self, index ,default_class = None):
+    def loads_from_json(self, index):
+        global default_class
         directory = 'Resource\\jsons'
 
-        file_path = os.path.join(directory, "default.json")
+        file_path = os.path.join(directory, config.get("dp_widgets"))
         if os.path.exists(file_path): # 如果文件存在，则读取文件内容
             with open(file_path, 'r', encoding='utf-8') as f:
                 if index == -1:
@@ -610,13 +593,17 @@ class Initialization():
                 else:
                     return json.load(f)[index]
         else: # 如果文件不存在，则返回默认数据并保存默认数据到文件
-            directory = 'Resource\\jsons'
             if not os.path.exists(directory):
                 os.makedirs(directory)
             file_path = os.path.join(directory, "default.json")
+            config["dp_widgets"] = "default.json"
             with open(file_path, 'w', encoding='utf-8') as f:
                 json.dump(default_class, f, ensure_ascii=False, indent=4)
-            return default_class
+            if index == -1:
+                return default_class
+            else:
+                return default_class[index]
+            #return default_class
     
     def saves_to_json(self):
         global class_ORD_Filtration, class_table_a, class_table_b, class_time_a, class_time_b, duty_table
@@ -690,14 +677,13 @@ class Initialization():
             return False
 
     def handle_exception(self,exc_type, exc_value, exc_traceback):
-        # 在这里添加你想在捕获到异常时运行的代码
+        # 捕获到异常时运行的代码
         #logging.error("Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback))
         main.logger.error(f"Uncaught exception: {exc_type}\n{exc_value}\n{exc_traceback}")
-        # 停止监听器线程
         theme_manager.themeListener.terminate()
         theme_manager.themeListener.deleteLater()
 
-        w = Dialog("运行出现致命错误", f"错误的详细信息为下，目前无法正常运行，请反馈给开发者。敬请谅解！\n错误日志保存在本目录Resource下的log文件夹中。 \n {exc_value}", None)
+        w = Dialog("运行出现致命错误", f"错误的详细信息为下，目前无法继续运行，请反馈给开发者。敬请谅解！\n错误日志保存在本目录Resource下的log文件夹中。 \n {exc_value}", None)
         w.yesButton.setText("好")
         w.cancelButton.hide()
         w.buttonLayout.insertStretch(1)
@@ -718,7 +704,7 @@ class Initialization():
             QMessageBox.warning(None, '警告', f'读取系统主题程序错误：{str(e)}\n将使用浅色模式。')
             return "light"
 
-    # 配置日志
+    # 日志
     def save_logger(self,log_dir, log_level=logging.INFO):
 
         # 确保日志目录存在
@@ -939,11 +925,10 @@ class TransparentClock(QMainWindow):
         self.animation_hide.setEasingCurve(QEasingCurve.InQuad)
 
     def closeEvent(self, event: QCloseEvent) -> None:
-        """if lists['close_sets']:
+        #event.accept()
+        if not is_system_shutting_down():
             event.ignore()
-            lists['close_sets'] = False
-        else:"""
-        event.accept()
+
 
 # 设置窗口
 class MainWindow(FluentWindow):
@@ -1061,12 +1046,10 @@ class MainWindow(FluentWindow):
         self.set_soft()
         self.set_display()
         self.set_Adjustment()
-
     def set_updates(self):
         self.cs = self.updates.findChild(PushButton, 'cs')
         self.cs.hide()
         #self.cs.clicked.connect(lambda :self.Flyout())
-
     def set_home(self):
         #------设置控件开始--------hide
 
@@ -1199,9 +1182,8 @@ class MainWindow(FluentWindow):
         # 还原默认字体（时间）
         self.default_time_font_PushButton = self.home.findChild(PushButton, 'default_time_font_PushButton')
         self.default_time_font_PushButton.clicked.connect(lambda:self.update_time("","fontname"))
-
     def set_dp_class(self):
-        #------设置桌面组件页面的控件--------hide
+        #------设置桌面组件页面的控件--------
         self.dp_Switch_button = self.dp_class.findChild(SwitchButton, 'dp_Switch_button')
         if config.get('dp_Switch') == "True":
             self.dp_Switch_button.setChecked(True)
@@ -1319,6 +1301,7 @@ class MainWindow(FluentWindow):
         self.choose_box = self.dp_class.findChild(ComboBox, 'dp_choose_box')
         entries = os.listdir('Resource/ui/dp/')
         self.files = [entry for entry in entries if os.path.isfile(os.path.join('Resource/ui/dp/', entry))]
+        
         self.choose_box.addItems(self.files)
         try:
             self.choose_box.setCurrentIndex(self.files.index(config.get("dp_choose")))
@@ -1358,6 +1341,34 @@ class MainWindow(FluentWindow):
         self.dp_audio_s_SpinBox.setValue(int(config.get('dp_audio_s')))
         self.dp_audio_s_SpinBox.valueChanged.connect(lambda value: self.update_dp(value,'dp_audio_s'))
 
+        self.dp_chowidgets_box = self.dp_class.findChild(ComboBox, 'dp_chowidgets_box')
+        self.update_file()
+        try:
+            self.dp_chowidgets_box.setCurrentIndex(self.json_widgets.index(config.get("dp_widgets").split('.')[0]))
+        except:
+            self.error("配置文件中的dp_widgets参数有误，请重新选择","警告",False,True)
+        self.dp_chowidgets_box.currentIndexChanged.connect(lambda value:self.update_dp(value,'dp_widgets'))
+        #self.dp_chowidgets_box.currentIndexChanged.connect(lambda value:self.inex('dp_widgets'))
+
+        # 导入导出
+        self.dp_import_button = self.dp_class.findChild(PushButton, 'dp_import_button')
+        self.dp_import_button.clicked.connect(lambda:self.inex("import"))
+        self.dp_export_button = self.dp_class.findChild(PushButton, 'dp_export_button')
+        self.dp_export_button.clicked.connect(lambda:self.inex("export"))
+        self.dp_imescs_button = self.dp_class.findChild(PushButton, 'dp_imescs_button')
+        self.dp_imescs_button.clicked.connect(lambda:self.inex("imescs"))
+        self.dp_exescs_button = self.dp_class.findChild(PushButton, 'dp_exescs_button')
+        self.dp_exescs_button.clicked.connect(lambda:self.inex("exescs"))
+        self.dp_openwidgets_button = self.dp_class.findChild(PushButton, 'dp_openwidgets_button')
+        self.dp_openwidgets_button.clicked.connect(lambda:self.inex("openwidgets"))
+
+        self.lingyun_radio = self.dp_class.findChild(RadioButton, 'lingyun_Radio')
+        self.cw_radio = self.dp_class.findChild(RadioButton, 'cw_Radio')
+        self.lcw_layout = self.dp_class.findChild(QHBoxLayout, 'horizontalLayout')
+        self.lcw_Group = QButtonGroup(self.lcw_layout)
+        self.lcw_Group.addButton(self.lingyun_radio)
+        self.lcw_Group.addButton(self.cw_radio)
+
     def set_soft(self):
         #------设置软件页面的控件--------
         self.update_button = self.soft.findChild(SwitchButton, 'update_button')
@@ -1382,7 +1393,6 @@ class MainWindow(FluentWindow):
         else:
             self.check_net_button.setChecked(False)
         self.check_net_button.checkedChanged.connect(lambda value: self.update_dp(value,'check_net'))
-
     def set_info(self):
         #------设置关于页面的控件--------
         global Version, yun_version
@@ -1400,6 +1410,11 @@ class MainWindow(FluentWindow):
         self.bilibili_button = self.info.findChild(PushButton, 'bilibili_button')
         self.bilibili_button.clicked.connect(lambda :webbrowser.open('https://space.bilibili.com/627622081'))
 
+        self.github_button = self.info.findChild(PushButton, 'github_button')
+        self.github_button.clicked.connect(lambda :webbrowser.open('https://github.com/Yamikani-Flipped/LingYun-Class-Widgets'))
+
+        self.thank_button = self.info.findChild(PushButton, 'thank_button')
+        self.thank_button.clicked.connect(lambda:self.error(e="致谢的第三方app及网站。以下为引用列表：\nClass Widgets：1.沿用了部分的ui文件（大部分已做整改）\n2.上下课、即将上课提醒的音频文件的使用\n3.作品中上下课提醒中“波澜”的部分代码的使用。\n\n软件部分图片来自Icons8网站。\n\n同时感谢所有的使用者和智教联盟网站的支持和指导！\n\n相关链接：\n智教联盟：https://forum.smart-teach.cn/\nClass Widgets仓库：https://github.com/Class-Widgets/Class-Widgets\nicons8：https://icons8.com/",msg="致谢",grades=False,vas=True))
     def set_classes(self):
         #------设置课表页面的控件--------
         self.TableWidget = self.classes.findChild(TableWidget, 'TableWidget')
@@ -1426,7 +1441,6 @@ class MainWindow(FluentWindow):
 
         self.up_Button = self.classes.findChild(PushButton, 'up_Button')
         self.up_Button.hide()
-
     def set_classes_time(self):
         #------设置时间线页面的控件--------
         self.TimeWidget = self.classes_time.findChild(ListWidget, 'ListWidget_time')
@@ -1481,7 +1495,6 @@ class MainWindow(FluentWindow):
         self.week_ComboBox = self.classes_time.findChild(ComboBox, 'week_ComboBox')
         self.week_ComboBox.addItems(['通用','周一','周二','周三','周四','周五','周六','周日'])
         self.week_ComboBox.currentIndexChanged.connect(self.week_changed)
-
     def set_duty(self):
         #------设置值日表页面的控件--------
         global duty_table
@@ -1510,7 +1523,6 @@ class MainWindow(FluentWindow):
         self.project_Button.clicked.connect(lambda: self.update_duty('project'))
         self.Add_Button.clicked.connect(lambda: self.update_duty('add_item'))
         self.Del_Button.clicked.connect(lambda: self.update_duty('del_item'))
-
     def set_display(self):
         self.dp_xiping_button = self.display.findChild(SwitchButton, 'dp_xiping_button')
         if config.get('dp_xiping') == "True":
@@ -1518,22 +1530,18 @@ class MainWindow(FluentWindow):
         else:
             self.dp_xiping_button.setChecked(False)
         self.dp_xiping_button.checkedChanged.connect(lambda value: self.update_dp(value,'dp_xiping'))
-
     def set_Adjustment(self):
         #------调课管理--------
         self.adj_Combobox = self.adjustment.findChild(ComboBox, 'adj_ComboBox')
         self.adj_Combobox.addItems(["默认","星期一","星期二","星期三","星期四","星期五","星期六","星期日"])
         #self.adj_Combobox.setPlaceholderText("请选择调整的星期")# 设置提示文本
         self.adj_Combobox.currentIndexChanged.connect(self.adj_week_changed)
-
     def adj_week_changed(self, index):
         global adj_weekday,DP_Comonent
         adj_weekday = index
         Initialization.convert_widget(-1)
         DP_Comonent.update_Widgets()
         DP_Comonent.update_duty()
-
-
     def SD_changed(self,value):
         global class_table_a, class_table_b, class_time_a, class_time_b
         self.TableWidget.itemChanged.disconnect(self.table_update)
@@ -1564,12 +1572,10 @@ class MainWindow(FluentWindow):
                 item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)# 设置单元格文本居中对齐
         lists["widgets_on"] = False
         self.TableWidget.itemChanged.connect(self.table_update)
-
     def week_changed(self):
         global class_weekday
         class_weekday = self.week_ComboBox.currentText()
         self.Time_Widget_update()
-
     def set_yun(self):
         #------设置集中控制页面的控件--------
         self.yun_Button = self.yun.findChild(SwitchButton, 'yun_button')
@@ -1682,7 +1688,6 @@ class MainWindow(FluentWindow):
         elif sever == "json_Switch":
             print(config.get("json_Switch"))
             pass'''
-            
     """# 加密函数
     def encrypt_data(self,data, key):
         # 生成随机的初始化向量 (IV)
@@ -1708,7 +1713,6 @@ class MainWindow(FluentWindow):
         return decrypted_data.decode('utf-8')
 
     """
-
     def Flyout(self,title,content,target,icon=InfoBarIcon.SUCCESS):
         '''
         icon=InfoBarIcon.SUCCESS,
@@ -1728,7 +1732,6 @@ class MainWindow(FluentWindow):
             isClosable=True,
             aniType=FlyoutAnimationType.PULL_UP
         )
-
     def update_duty(self,choose):
         global DP_Comonent
         if choose == "duty_widget":
@@ -1892,9 +1895,18 @@ class MainWindow(FluentWindow):
             self.error(str(e))
         
         self.error("需要重启才可以使更改生效。","提示",False,True)
-
-        
     def update_dp(self,value,choose):
+        if choose == "dp_widgets":
+            DP_Comonent.lingyun_down.setText("--:--")
+            value = self.json_widgets[value] + ".json"
+            
+            ###########通知主程序更新组件
+
+            #Initialization().load_data()
+            #DP_Comonent.alert()
+            #DP_Comonent.update_Widgets()
+            #DP_Comonent.update_duty()
+
         if choose == "dp_duty_TimePicker_from":
             value = f"{value.hour()}:{value.minute()}"
         if choose == "dp_duty_TimePicker_to":
@@ -1916,6 +1928,9 @@ class MainWindow(FluentWindow):
                 reg.CloseKey(registry_key)
 
         config[choose] = str(value)
+
+        if choose == "dp_widgets":
+            self.inex("dp_widgets")
 
         if choose == "dp_Bell":
             if str(value) == "True":
@@ -2350,18 +2365,17 @@ class MainWindow(FluentWindow):
             white_reg_new()
         elif choose == "cl_time_Second":
             white_reg_new()
-
     def error(self,e,msg="错误",grades=False,vas=False):
         if grades:
-            w = Dialog(msg, str(e)+"\n 此问题非常严重，直接影响程序运行，只能关闭程序，给您带来不便，请谅解。", self)
-            w.yesButton.setText("关闭程序")
+            w = Dialog(msg, str(e)+"\n 此问题影响了程序运行，请重启本程序，给您带来不便，请谅解。", self)
+            w.yesButton.setText("重启软件")
             w.cancelButton.hide()
             w.buttonLayout.insertStretch(1)
             if w.exec():
-                # 停止监听器线程
-                theme_manager.themeListener.terminate()
-                theme_manager.themeListener.deleteLater()
-                QApplication.quit()
+                restart_program()
+                #theme_manager.themeListener.terminate()
+                #theme_manager.themeListener.deleteLater()
+                #QApplication.quit()
         else:
             if vas:
                 w = MessageBox(msg, e, self)
@@ -2371,13 +2385,13 @@ class MainWindow(FluentWindow):
                 if w.exec():pass
             else:
                 w = MessageBox(msg, e, self)
-                w.yesButton.setText("关闭程序")
-                w.cancelButton.setText("忽略错误")
+                w.yesButton.setText("重启软件")
+                w.cancelButton.setText("忽略")
                 if w.exec():
-                    # 停止监听器线程
-                    theme_manager.themeListener.terminate()
-                    theme_manager.themeListener.deleteLater()
-                    QApplication.quit()
+                    restart_program()
+                    #theme_manager.themeListener.terminate()
+                    #theme_manager.themeListener.deleteLater()
+                    #QApplication.quit()
                 else:pass
     def initWindow(self):
         self.resize(900, 700)
@@ -2394,10 +2408,10 @@ class MainWindow(FluentWindow):
         self.CardWidget_json.hide()
         self.CardWidget_xg.hide()
 
-
         self.yun_PasswordLineEdit.clear()
         self.hide()
         event.ignore()
+
     def startup_program(self, zt, program_path=script_full_path, program_name="LingYun_Class_Widgets"):
         try:
             # 打开注册表项，为当前用户设置开机启动
@@ -2428,6 +2442,1433 @@ class MainWindow(FluentWindow):
         except Exception as e:
             self.error("读取注册表出现问题，以下为详细问题：（请报告给开发者）\n" + str(e))
             return False
+    def json_to_yaml(self,json_path, yaml_path):
+        with open(json_path, 'r', encoding='utf-8') as jf:
+            data = json.load(jf)
+
+        result = {
+            'version': 1,
+            'subjects': [],
+            'schedules': []
+        }
+
+        subjects = set()
+        for day_data in [data[1], data[2]]: 
+            for day_num, day_schedule in day_data.items():
+                for period in day_schedule:
+                    for time_period, courses in period.items():
+                        subjects.update(courses)
+        
+        
+        for subject in subjects:
+            if subject:   
+                result['subjects'].append({
+                    'name': subject,
+                    'simplified_name': subject[0],   
+                    'teacher': '',
+                    'room': ''
+                })
+
+        
+
+        for day_num, day_schedule in data[1].items():
+            schedule = {
+                'name': f'星期{day_num}-单周',
+                'enable_day': int(day_num),
+                'weeks': 'odd',
+                'classes': []
+            }
+            
+            section_counter = 1
+            for period_schedule in day_schedule:
+                for period, courses in period_schedule.items():
+                    if isinstance(courses, list):   
+                        for i, subject in enumerate(courses):
+                            time_slot = data[3][day_num][period][i].split('-')
+                            schedule['classes'].append({
+                                'subject': subject if subject else None,   
+                                'start_time': f"{time_slot[0]}:00",
+                                'end_time': f"{time_slot[1]}:00",
+                                'room': f'{day_num}0{section_counter}'
+                            })
+                            section_counter += 1
+            
+            result['schedules'].append(schedule)
+        
+
+        for day_num, day_schedule in data[2].items():
+            schedule = {
+                'name': f'星期{day_num}-双周',
+                'enable_day': int(day_num),
+                'weeks': 'even',
+                'classes': []
+            }
+            
+            section_counter = 1
+            
+            for period_schedule in day_schedule:
+                for period, courses in period_schedule.items():
+                    if isinstance(courses, list):   
+                        for i, subject in enumerate(courses):
+                            time_slot = data[4][day_num][period][i].split('-')
+                            schedule['classes'].append({
+                                'subject': subject if subject else None,   
+                                'start_time': f"{time_slot[0]}:00",
+                                'end_time': f"{time_slot[1]}:00",
+                                'room': f'{day_num}0{section_counter}'
+                            })
+                            section_counter += 1
+            
+            result['schedules'].append(schedule)
+        
+        with open(yaml_path, 'w', encoding='utf-8') as yf:
+            yaml.dump(result, yf, allow_unicode=True, sort_keys=False)
+
+
+        def SD_changed(self,value):
+            global class_table_a, class_table_b, class_time_a, class_time_b
+            self.TableWidget.itemChanged.disconnect(self.table_update)
+            lists["widgets_on"] = True
+            self.TableWidget.clear()
+            if value == 0: # 单周
+                done, ls = self.convert_table(class_table_a)
+                self.widget_time = self.convert_time(class_time_a)
+            else: # 双周
+                done, ls = self.convert_table(class_table_b)
+
+                self.widget_time = self.convert_time(class_time_b)
+            
+            self.TableWidget.setWordWrap(False)
+            # 设置表格的行数和列数
+            self.TableWidget.setRowCount(ls)
+            self.TableWidget.setColumnCount(8)
+            self.TableWidget.setHorizontalHeaderLabels(['时间','星期一','星期二','星期三','星期四','星期五','星期六','星期日'])
+
+            for i in range(ls):
+                item = QTableWidgetItem(self.widget_time[i])
+                self.TableWidget.setItem(i, 0, item)
+                item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            for i, Info in enumerate(done):
+                for j in range(7):
+                    item = QTableWidgetItem(Info[j])
+                    self.TableWidget.setItem(i, j+1, item)
+                    item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)# 设置单元格文本居中对齐
+            lists["widgets_on"] = False
+            self.TableWidget.itemChanged.connect(self.table_update)
+
+        def week_changed(self):
+            global class_weekday
+            class_weekday = self.week_ComboBox.currentText()
+            self.Time_Widget_update()
+
+        def set_yun(self):
+            #------设置集中控制页面的控件--------
+            self.yun_Button = self.yun.findChild(SwitchButton, 'yun_button')
+            self.yun_PasswordLineEdit = self.yun.findChild(PasswordLineEdit, 'yun_PasswordLineEdit')
+            self.password_PushButton = self.yun.findChild(PushButton, 'password_PushButton')
+            self.equipment_LineEdit = self.yun.findChild(LineEdit, 'equipment_LineEdit')
+            self.http_LineEdit = self.yun.findChild(LineEdit, 'http_LineEdit')
+            self.timeleg_button = self.yun.findChild(SwitchButton, 'timeleg_button')
+            self.json_button = self.yun.findChild(SwitchButton, 'json_button')
+            self.yun_xg_PasswordLineEdit = self.yun.findChild(PasswordLineEdit, 'yun_xg_PasswordLineEdit')
+            self.xg_PushButton = self.yun.findChild(PushButton, 'xg_password_PushButton')
+
+            self.equipment_PushButton = self.yun.findChild(PushButton, 'equipment_PushButton')
+            self.http_PushButton = self.yun.findChild(PushButton, 'http_PushButton')
+
+            self.yuntime_SpinBox = self.yun.findChild(SpinBox, 'yuntime_SpinBox')
+            
+
+            self.CardWidget_yun = self.yun.findChild(CardWidget, 'CardWidget_13')
+            self.CardWidget_equipment = self.yun.findChild(CardWidget, 'CardWidget_8')
+            self.CardWidget_https = self.yun.findChild(CardWidget, 'CardWidget_11')
+            self.CardWidget_timeleg = self.yun.findChild(CardWidget, 'CardWidget_10')
+            self.CardWidget_json = self.yun.findChild(CardWidget, 'CardWidget_9')
+            self.CardWidget_xg = self.yun.findChild(CardWidget, 'CardWidget_14')
+            
+            self.CardWidget_yun.hide()
+            self.CardWidget_equipment.hide()
+            self.CardWidget_https.hide()
+            self.CardWidget_timeleg.hide()
+            self.CardWidget_json.hide()
+            self.CardWidget_xg.hide()
+
+
+            self.password_PushButton.clicked.connect(lambda:self.yun_sever("None","password"))
+
+            if config.get("yun_Switch") == "True":
+                self.yun_Button.setChecked(True)
+            else:
+                self.yun_Button.setChecked(False)
+            self.yun_Button.checkedChanged.connect(lambda value:self.yun_sever(value,"yun_Switch"))
+
+            self.equipment_LineEdit.setText(config.get("yun_equipment"))
+            self.equipment_PushButton.clicked.connect(lambda:self.yun_sever(self.equipment_LineEdit.text(),"yun_equipment"))
+
+            self.http_LineEdit.setText(config.get("yun_https"))
+            self.http_PushButton.clicked.connect(lambda:self.yun_sever(self.http_LineEdit.text(),"yun_https"))
+
+            
+
+            if config.get("timeleg_Switch") == "True":
+                self.timeleg_button.setChecked(True)
+            else:
+                self.timeleg_button.setChecked(False)
+            if config.get("json_Switch") == "True":
+                self.json_button.setChecked(True)
+            else:
+                self.json_button.setChecked(False)
+
+            self.timeleg_button.checkedChanged.connect(lambda value:self.yun_sever(value,"timeleg_Switch"))
+            self.json_button.checkedChanged.connect(lambda value:self.yun_sever(value,"json_Switch"))
+
+
+            self.xg_PushButton.clicked.connect(lambda:self.yun_sever(self.yun_xg_PasswordLineEdit.text(),"yun_password"))
+
+            self.yuntime_SpinBox.setValue(int(config.get("yun_time")))
+            self.yuntime_SpinBox.valueChanged.connect(lambda value:self.yun_sever(value,"yun_time"))
+
+
+            #self.yun_Button.clicked.connect(self.yun_Button_clicked)
+        def yun_sever(self,value,sever):
+            if sever == "password":
+                password = self.yun_PasswordLineEdit.text()
+                if password == config.get("yun_password"):
+                    self.CardWidget_yun.show()
+                    self.CardWidget_equipment.show()
+                    self.CardWidget_https.show()
+                    self.CardWidget_timeleg.show()
+                    self.CardWidget_json.show()
+                    self.CardWidget_xg.show()
+                else:
+                    self.error("密码可能是错误的","警告",False,True)
+                    self.yun_PasswordLineEdit.clear()
+                return
+
+            try:
+                # 创建或打开注册表键
+                registry_key = reg.CreateKey(reg.HKEY_CURRENT_USER, r'SOFTWARE\LingYunTimes')
+                # 获取当前设置的值
+                config[sever] = str(value)
+                # 将设置写入注册表
+                reg.SetValueEx(registry_key, sever, 0, reg.REG_SZ, str(value))
+            except Exception as e:
+                self.error(str(e))
+            finally:
+                if 'registry_key' in locals():
+                    reg.CloseKey(registry_key)
+
+            '''if sever == "yun_Switch":
+                print(config.get("yun_Switch"))
+                pass
+            elif sever == "yun_equipment":
+                print(config.get("yun_equipment"))
+                pass
+            elif sever == "yun_https":
+                print(config.get("yun_https"))
+                pass
+            elif sever == "timeleg_Switch":
+                print(config.get("timeleg_Switch"))
+                pass
+            elif sever == "json_Switch":
+                print(config.get("json_Switch"))
+                pass'''
+                
+        """# 加密函数
+        def encrypt_data(self,data, key):
+            # 生成随机的初始化向量 (IV)
+            iv = get_random_bytes(16)
+            # 创建 AES 加密器
+            cipher = AES.new(key, AES.MODE_CBC, iv)
+            # 对数据进行填充并加密
+            encrypted_data = cipher.encrypt(pad(data.encode('utf-8'), AES.block_size))
+            # 返回 IV 和加密后的数据
+            return iv + encrypted_data
+
+        # 解密函数
+        def decrypt_data(self,encrypted_data, key):
+            # 提取 IV
+            iv = encrypted_data[:16]
+            # 提取加密数据
+            ciphertext = encrypted_data[16:]
+            # 创建 AES 解密器
+            cipher = AES.new(key, AES.MODE_CBC, iv)
+            # 解密并去除填充
+            decrypted_data = unpad(cipher.decrypt(ciphertext), AES.block_size)
+            # 返回解密后的数据
+            return decrypted_data.decode('utf-8')
+
+        """
+
+        def Flyout(self,title,content,target,icon=InfoBarIcon.SUCCESS):
+            '''
+            icon=InfoBarIcon.SUCCESS,
+            title='Lesson 4',
+            content="表达敬意吧",
+            target=self.cs,
+            parent=self,
+            isClosable=True,
+            aniType=FlyoutAnimationType.PULL_UP
+            '''
+            Flyout.create(
+                icon=icon,
+                title=title,
+                content=content,
+                target=target,
+                parent=self,
+                isClosable=True,
+                aniType=FlyoutAnimationType.PULL_UP
+            )
+
+        def update_duty(self,choose):
+            global DP_Comonent
+            if choose == "duty_widget":
+                if self.duty_Widget.currentItem() == None:
+                    self.name_Edit.clear()
+                    self.project_Edit.clear()
+                    return
+                week = str(self.week)
+                duty = duty_table.get(week, [])
+                text = self.duty_Widget.currentItem().text().split("-")[0]
+                try:
+                    self.project_Edit.setText(text)
+                    self.name_Edit.setText(" ".join(duty[text]))
+                except Exception as e:
+                    self.project_Edit.clear()
+                    self.name_Edit.clear()
+            elif choose == "name":
+                week = str(self.week)
+                name = self.name_Edit.text()
+                if len(name) > 20 or len(name) < 1:
+                    self.error("名字长度必须介于1到20之间","警告",False,True)
+                    return
+                if self.duty_Widget.currentItem() == None:
+                    self.error("请先选择一个项目","警告",False,True)
+                    return
+                text = self.duty_Widget.currentItem().text().split("-")[0]
+                names = name.split(" ")
+                duty_table[week][text] = names
+                main.saves_to_json()
+                #main.save_to_json(duty_table,"duty_table.json")
+                self.duty_week_changed(self.week - 1)
+            elif choose == "project":
+                week = str(self.week)
+                name = self.project_Edit.text()
+                if len(name) > 6 or len(name) < 1:
+                    self.error("名字长度必须介于1到6之间","警告",False,True)
+                    return
+                if self.duty_Widget.currentItem() == None:
+                    self.error("请先选择一个项目","警告",False,True)
+                    return
+                text = self.duty_Widget.currentItem().text().split("-")[0]
+                duty_table[week][name] = duty_table[week].pop(text) # 修改项目名字
+                main.saves_to_json()
+                #main.save_to_json(duty_table,"duty_table.json")
+                self.duty_week_changed(self.week - 1)
+            elif choose == "add_item":
+                week = str(self.week)
+                name = self.name_Edit.text()
+                project = self.project_Edit.text()
+                if name == "" or project == "":
+                    self.error("请先输入项目名字和负责人员","警告",False,True)
+                    return
+                if len(name) > 20 or len(name) < 1:
+                    self.error("名字长度必须介于1到20之间","警告",False,True)
+                    return
+                if len(project) > 6 or len(project) < 1:
+                    self.error("项目长度必须介于1到6之间","警告",False,True)
+                    return
+                names = name.split(" ")
+                duty_table[week][project] = names
+                main.saves_to_json()
+                #main.save_to_json(duty_table,"duty_table.json")
+                self.duty_week_changed(self.week - 1)
+            elif choose == "del_item":
+                week = str(self.week)
+                if self.duty_Widget.currentItem() == None:
+                    self.error("请先选择一个项目","警告",False,True)
+                    return
+                text = self.duty_Widget.currentItem().text().split("-")[0]
+                duty_table[week].pop(text)
+                main.saves_to_json()
+                #main.save_to_json(duty_table,"duty_table.json")
+                self.duty_week_changed(self.week - 1)
+
+            if self.week == datetime.now().weekday() + 1:
+                DP_Comonent.update_duty()
+        def duty_week_changed(self,index):
+            self.week = index + 1
+            week = str(index + 1)
+            duty0 = duty_table.get(week, [])
+            formatted_tasks = []
+            for task, students in duty0.items():
+                # 将学生列表用空格连接
+                students_str = '、'.join(students)
+                # 格式化为 "任务(学生1 学生2)" 的形式
+                formatted_task = f"{task}-（{students_str}）"
+                formatted_tasks.append(formatted_task)
+
+            self.duty_Widget.clear()
+            self.duty_Widget.addItems(formatted_tasks)
+
+            self.name_Edit.clear()
+            self.project_Edit.clear()
+        def click_TimeWidget(self,index):
+            global class_ORD_Filtration,lists,main
+            lists["click_Counter"] = True
+            self.Counter_SwitchButton.setDisabled(False)
+            if index.text() in class_ORD_Filtration:
+                self.Counter_SwitchButton.setChecked(True)
+            else:
+                self.Counter_SwitchButton.setChecked(False)
+            lists["click_Counter"] = False
+        def click_Counter_Button(self,value):
+            global class_ORD_Filtration,lists,main        
+            if lists.get("click_Counter") == False:
+                t = self.TimeWidget.currentItem().text()
+                if self.TimeWidget.currentItem() == None:
+                    self.error("请先选择一个时间段","警告",False,True)
+                    lists["click_Counter"] = True
+                    if value == True:self.Counter_SwitchButton.setChecked(False)
+                    else:self.Counter_SwitchButton.setChecked(True)
+                    return
+                if t in self.ap_list:
+                    self.error(f"请选择时间段。“{t}”不是时间段。","警告",False,True)
+                    lists["click_Counter"] = True
+                    if value == True:self.Counter_SwitchButton.setChecked(False)
+                    else:self.Counter_SwitchButton.setChecked(True)
+                    return
+                try:
+                    if t not in class_ORD_Filtration:
+                        class_ORD_Filtration.append(str(t))
+                    else:
+                        class_ORD_Filtration.remove(str(t))
+                except Exception as e:
+                    self.error("逻辑出问题，可能是配置中已经存在或者是读取后手动修改，请检查json文件，或者重试。\n以下为详细错误信息：\n"+str(e),"警告",False,True)
+                
+                main.white_Widgets()
+            else:
+                lists["click_Counter"] = False
+        def stacked(self,st):
+            """if st == 3:
+                w = MessageBox("提示", "在你编辑时间线时，桌面组件需要被关闭，因为在修改时间时可能造成冲突而出错。\n点击确定后关闭桌面组件，重启本软件可以恢复。感谢您的理解！", self)
+                w.yesButton.setText("确定")
+                w.cancelButton.setText("不关闭进行编辑(不建议)")
+                if w.exec():
+                    DP_Comonent.animation_hide.start()
+                    DP_Comonent.animation_rect_hide.start()
+                    tim = QTimer()
+                    tim.singleShot(1000, lambda: DP_Comonent.close())
+                else:pass"""
+        def choose_font_dp(self):
+            font, ok = QFontDialog.getFont(self)
+            if ok:
+                self.update_dp(font.family(),'dp_Typeface')
+                config['dp_Typeface'] = font.family()
+        def choose_color_dp(self ,types):
+            color = QColorDialog.getColor()
+            if color.isValid():
+                DP_Comonent.lingyun_Bar.setCustomBarColor(QColor(color), QColor(color))
+                config[f'dp_Countdown_Bar_color_{types}'] = color.name()
+                self.update_dp(color.name(),f'dp_Countdown_Bar_color_{types}')
+        def choose_box_changed(self,index):
+            try:
+                # 创建或打开注册表键
+                registry_key = reg.CreateKey(reg.HKEY_CURRENT_USER, r'SOFTWARE\LingYunTimes')
+                # 获取当前设置的值
+                config["dp_choose"] = self.files[index]
+                # 将设置写入注册表
+                reg.SetValueEx(registry_key, "dp_choose", 0, reg.REG_SZ, str(self.files[index]))
+            except Exception as e:
+                self.error(str(e))
+            
+            self.error("需要重启才可以使更改生效。","提示",False,True)
+
+            
+        def update_dp(self,value,choose):
+            if choose == "dp_duty_TimePicker_from":
+                value = f"{value.hour()}:{value.minute()}"
+            if choose == "dp_duty_TimePicker_to":
+                value = f"{value.hour()}:{value.minute()}"
+
+            if choose == "dp_danweekly":
+                value = f"{value.year()},{value.month()},{value.day()}"
+            try:
+                # 创建或打开注册表键
+                registry_key = reg.CreateKey(reg.HKEY_CURRENT_USER, r'SOFTWARE\LingYunTimes')
+                # 获取当前设置的值
+                config[choose] = str(value)
+                # 将设置写入注册表
+                reg.SetValueEx(registry_key, choose, 0, reg.REG_SZ, str(value))
+            except Exception as e:
+                self.error(str(e))
+            finally:
+                if 'registry_key' in locals():
+                    reg.CloseKey(registry_key)
+
+            config[choose] = str(value)
+
+            if choose == "dp_Bell":
+                if str(value) == "True":
+                    self.CardWidget_8.show()
+                    if config.get('dp_Sysvolume') == "True":
+                        self.CardWidget_11.show()
+                    else:
+                        self.CardWidget_11.hide()
+                else:
+                    self.CardWidget_8.hide()
+                    self.CardWidget_11.hide()
+            if choose == "dp_Sysvolume":
+                if str(value) == "True" :
+                    self.CardWidget_11.show()
+                else:
+                    self.CardWidget_11.hide()
+            if choose == "dp_biweekly":
+                self.Flyout(title="提示",content="修改成功！重启后生效",target=self.dp_biweekly_button)
+            if choose == "dp_Typeface":
+                self.Flyout(title="提示",content="重置成功！",target=self.default_dp_font_PushButton)
+
+            if choose == "check_update" or choose == "print_log" or choose == "check_net" or choose == "dp_xiping":
+                return
+
+            DP_Comonent.update_ui(value,choose)
+        def update_widgets_visibility(self):
+            if self.TimeWidget.selectedItems():
+                self.edit_label.show()
+                self.CardWidget4.show()
+            else:
+                self.edit_label.hide()
+                self.CardWidget4.hide()
+        def edit_time(self):
+            if self.from_time_edit == "" or self.to_time_edit == "":
+                self.error("请先选择开始时间和结束时间","警告",False,True)
+                return
+            if self.from_time_edit > self.to_time_edit:
+                self.error("开始时间不能大于结束时间","警告",False,True)
+                return
+            if self.from_time_edit == self.to_time_edit:
+                self.error("开始时间不能等于结束时间","警告",False,True)
+                return
+            
+            # 去掉秒数并格式化时间段
+            start_time_formatted = datetime.strptime(self.from_time_edit, "%H:%M:%S").strftime("%H:%M")
+            end_time_formatted = datetime.strptime(self.to_time_edit, "%H:%M:%S").strftime("%H:%M")
+            time_period = f"{start_time_formatted}-{end_time_formatted}"
+
+            # 提供的时间段和要修改的时间段
+            old_time_period = self.TimeWidget.currentItem().text()
+
+            zp = {"周一":"1","周二":"2","周三":"3","周四":"4","周五":"5","周六":"6","周日":"7"}
+            s = self.week_ComboBox.currentText()
+
+            # 找出时间段并进行修改
+            if s == "通用":
+                for ins in class_time:
+                    for period in class_time[ins]:
+                        if old_time_period in class_time[ins][period]:
+                            index = class_time[ins][period].index(old_time_period)
+                            class_time[ins][period][index] = time_period
+                            break
+            else:
+                s = zp[s]
+                for period in class_time[s]:
+                    if old_time_period in class_time[s][period]:
+                        index = class_time[s][period].index(old_time_period)
+                        class_time[s][period][index] = time_period
+                        break
+
+            
+            #for period in class_time:
+            #    if old_time_period in class_time[period]:
+            #        index = class_time[period].index(old_time_period)
+            #        class_time[period][index] = time_period
+            #        break
+            main.saves_to_json()
+            #main.save_to_json(class_time, 'class_time.json')
+            self.TimeWidget.clearSelection()
+            self.Time_Widget_update()
+            self.add_name_box.clear()
+            self.add_name_box.addItems(self.ap_list)
+        def del_Widget(self):
+            if self.TimeWidget.currentItem() is None:
+                self.error("请先选择一个时间段","警告",False,True)
+                return
+            if self.TimeWidget.currentItem().text() in self.ap_list:
+                self.error(f"请选择一个时间段。\n如果你需要删除这整个“{self.TimeWidget.currentItem().text()}”，那么你应该先删除“{self.TimeWidget.currentItem().text()}”下所有的时间段。","警告",False,True)
+                return
+            w = MessageBox("提示", "你确定要删除吗？\n这样会使那一段内星期一至星期日的那一节课全部删除，确定？\n此操作不可逆！", self)
+            w.cancelButton.setText("确定")
+            w.yesButton.setText("我再想想")
+            if w.exec():pass
+            else:
+                time_period = self.TimeWidget.currentItem().text()
+                # 找出时间段的位置和午别
+                found = False
+                for ins in class_time:
+                    for period in class_time[ins]:
+                        if time_period in class_time[ins][period]:
+                            index = class_time[ins][period].index(time_period)
+                            #class_time[ins][period].remove(time_period)
+                            class_time[ins][period].pop(index)
+                            found_period = period
+                            found = True
+                            break
+                if found:
+                    # 检查午别是否为空，如果为空则删除午别
+                    if not class_time["default"][found_period]:
+                        for ins in class_time:
+                            del class_time[ins][found_period]
+                        # 在 class_table 中删除对应的午别
+                        for day in range(1, 8):
+                            day_str = str(day)
+                            for period in class_table[day_str]:
+                                if found_period in period:
+                                    del period[found_period]
+                            # 移除空字典
+                            class_table[day_str] = [p for p in class_table[day_str] if p]
+                    else:
+                        # 在 class_table 中删除对应的课程
+                        for day in range(1, 8):
+                            day_str = str(day)
+                            for period in class_table[day_str]:
+                                if found_period in period:
+                                    if len(period[found_period]) > index:
+                                        del period[found_period][index]
+                            # 移除空字典
+                            class_table[day_str] = [p for p in class_table[day_str] if p]
+
+                main.saves_to_json()
+                #main.save_to_json(class_table, 'class_table.json')
+                
+                #main.save_to_json(class_time, 'class_time.json')
+                self.TimeWidget.clearSelection()
+                self.Time_Widget_update()
+                #self.set_table_update()
+                self.add_name_box.clear()
+                self.add_name_box.addItems(self.ap_list)
+        def cancel_Widget(self):
+            self.TimeWidget.clearSelection()
+        def add_time(self):
+            
+            #print(self.from_time, self.to_time)
+            if self.from_time == "" or self.to_time == "":
+                self.error("请先选择开始时间和结束时间","警告",False,True)
+                return
+            if self.from_time > self.to_time:
+                self.error("开始时间不能大于结束时间","警告",False,True)
+                return
+            if self.from_time == self.to_time:
+                self.error("开始时间不能等于结束时间","警告",False,True)
+                return
+            for i in range(1, 8):
+                for item in class_table[str(i)]:
+                    if self.add_name in item:
+                        item[self.add_name].append('未设置')
+            
+            # 去掉秒数并格式化时间段
+            start_time_formatted = datetime.strptime(self.from_time, "%H:%M:%S").strftime("%H:%M")
+            end_time_formatted = datetime.strptime(self.to_time, "%H:%M:%S").strftime("%H:%M")
+            time_period = f"{start_time_formatted}-{end_time_formatted}"
+            # 向“上午”键的值的末尾添加新的时间段
+            for ins in class_time:
+                class_time[ins][self.add_name].append(time_period)
+
+            main.saves_to_json()
+            #main.save_to_json(class_table, 'class_table.json')
+            #main.save_to_json(class_time, 'class_time.json')
+            self.Time_Widget_update()
+            #self.set_table_update()
+        def Time_Widget_update(self):
+            self.TimeWidget.clear()
+            self.ap_list = []
+            s = class_weekday
+            zp = {"周一":"1","周二":"2","周三":"3","周四":"4","周五":"5","周六":"6","周日":"7"}
+            if s == "通用":
+                ins = "default"
+            else:
+                ins = zp[s]
+
+            for i in class_time[ins]: # i是午别名字，class_time[i]是时间段
+                self.ap_list.append(i)
+                item = QListWidgetItem(i)
+                item.setTextAlignment(Qt.AlignCenter)
+                self.TimeWidget.addItem(item)
+                for time in class_time[ins][i]:
+                    time_item = QListWidgetItem(time)
+                    time_item.setTextAlignment(Qt.AlignCenter)
+                    self.TimeWidget.addItem(time_item)
+        def add_aptime(self):
+            if self.name_box.currentIndex() == 3:
+                name = self.name_edit.toPlainText()
+            else:
+                name = self.name_box.currentText()
+            if not name:
+                self.error("请先输入时间段","警告",False,True)
+                return
+            if name in self.ap_list:
+                self.error("时间段已存在,请不要重复添加","警告",False,True)
+                return
+            """self.ap_list.append(name)
+            item = QListWidgetItem(name)
+            item.setTextAlignment(Qt.AlignCenter)
+            self.TimeWidget.addItem(item)"""
+            for ins in class_time:
+                class_time[ins][name] = ["00:00-00:01"]
+            for i in range(1,8):
+                class_table[str(i)].append({name:['未设置']})
+
+            main.saves_to_json()
+            #main.save_to_json(class_table, 'class_table.json')
+            #main.save_to_json(class_time, 'class_time.json')
+            
+            self.Time_Widget_update()
+            self.add_name_box.clear()
+            self.add_name_box.addItems(self.ap_list)
+
+            #self.set_table_update()
+        def name_box_changed(self):
+            index = self.name_box.currentIndex()
+            if index == 3:
+                self.name_edit.show()
+                #self.name_label.show()
+            elif index == 0 or index == 1 or index == 2:
+                self.name_edit.hide()
+                #self.name_label.hide()
+        def on_resize(self):
+            # 重新平均设置列宽
+            total_width = self.TableWidget.viewport().width() - 120 # 获取视口宽度
+            column_width = total_width // 7  # 计算每列宽度
+            for col in range(7):
+                self.TableWidget.setColumnWidth(col+1, column_width)  # 设置每列宽度
+            self.TableWidget.setColumnWidth(0, 120)  # 设置第一列宽度
+            self.Table_Time.stop()
+        def set_table_update(self,index=None):
+            if index != None:
+                if index == 0:
+                    done, ls = self.convert_table(class_table_a)
+                    self.widget_time = self.convert_time(class_time_a)
+                else:
+                    done, ls = self.convert_table(class_table_b)
+                    self.widget_time = self.convert_time(class_time_b)
+            else:
+                done, ls = self.convert_table(class_table_a)
+                self.widget_time = self.convert_time(class_time_a)
+
+            self.TableWidget.setWordWrap(False)
+            # 设置表格的行数和列数
+            self.TableWidget.setRowCount(ls)
+            self.TableWidget.setColumnCount(8)
+            self.TableWidget.setHorizontalHeaderLabels(['时间','星期一','星期二','星期三','星期四','星期五','星期六','星期日'])
+            # 禁止用户修改列宽
+            #self.TableWidget.horizontalHeader().setSectionResizeMode(QHeaderView.Fixed)  # 设置列宽为固定
+            for i in range(ls):
+                item = QTableWidgetItem(self.widget_time[i])
+                self.TableWidget.setItem(i, 0, item)
+                item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            for i, Info in enumerate(done):
+                for j in range(7):
+                    item = QTableWidgetItem(Info[j])
+                    self.TableWidget.setItem(i, j+1, item)
+                    item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)# 设置单元格文本居中对齐
+        def table_update(self, item=None):
+            # 如果单元格对象为空
+            if item is None:
+                pass
+            else:
+                row = item.row()  # 获取行数#row是第x-1节
+                col = item.column()  # 获取列数#col多少就是星期几
+                text = item.text()  # 获取内容#text是课程名
+                if col == 0:
+                    if lists["widgets_on"] == False:
+                        w = MessageBox("警告", "请不要在此处修改时间，\n如果需要修改请前往“时间线”进行编辑。", self)
+                        w.yesButton.setText("好")
+                        w.cancelButton.hide()
+                        w.buttonLayout.insertStretch(1)
+                        if w.exec():
+                            lists["widgets_on"] = True
+                            item = QTableWidgetItem(self.widget_time[int(row)])
+                            self.TableWidget.setItem(int(row), int(col), item)
+                            item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                            lists["widgets_on"] = False
+                else:
+                    ins = 0
+                    inss = []
+                    for i in range(len(class_table[str(col)])):
+                        f = list(class_table[str(col)][i].keys())[0]
+                        ins += len(class_table[str(col)][i][f]) #获得每天有多少节课
+                        inss.append(len(class_table[str(col)][i][f]))
+                    for i in range(1,len(inss)):#计算每个时间段的结束位置
+                        inss[i] = inss[i-1] + inss[i]
+                    if 0 <= row < ins and 1 <= col <= 7:
+                        t = 0
+                        for i in range(len(inss)):
+                            if row+1 <= inss[i]:
+                                period = list(class_table[str(col)][i].keys())[0] # 获取对应时间段
+                                break
+                        # 确定当前行属于哪个时间段以及这是该时间段的第几节课
+                        period_index = 0
+                        if i != 0:
+                            period_index = row - inss[i-1]
+                        else:
+                            period_index = row
+                        # 检查该时间段是否有课程列表
+                        if class_table[str(col)][i][period]:
+                            class_table[str(col)][i][period][period_index] = text# 如果有课程列表，则更新第一个课程名称
+                        else: # 暂时不用(不会被调用到)
+                            class_table[str(col)][i][period] = [text]# 如果没有课程列表，则创建一个并添加新课程名称
+                        
+                        # 更新后的class_table
+                        e = main.white_Widgets()
+                        if e != None:
+                            self.error("保存课表出现错误：\n" + str(e))
+                    else:
+                        self.error("修改了无效的行或索引")
+        def convert_table(self,classt):
+            # 将class_table转换为二维列表
+            weeks = str(datetime.now().weekday() + 1)
+            jies = []
+            for week in range(1, 8):
+                day = []
+                for wu in range(len(classt[str(week)])):
+                    wus = list(classt[str(week)][wu].keys())[0]
+                    if classt[str(week)][wu][wus] == []:
+                        for kong in range(len(class_time[weeks][list(classt[str(week)][wu].keys())[0]])):
+                            day.append("")
+                    else:
+                        for jie in range(len(classt[str(week)][wu][wus])):
+                            day.append(classt[str(week)][wu][wus][jie])
+                jies.append(day)
+            done = [list(t) for t in list(zip(*jies))]# 使用zip函数转置列表,由于zip返回的是元组，如果需要列表，可以使用列表推导式转换
+            return done,len(day)
+        def convert_time(self,class_t):
+            result = []
+            for values in class_t["default"].values():
+                result.extend(values)
+            return result
+        def choose_color(self,ty):
+            color = QColorDialog.getColor()
+            #color_rgba = color.getRgb()
+            colors = [color.red(),color.green(),color.blue()]
+            if color.isValid():
+                if ty == "time":
+                    self.update_time(colors,"cl_time_TextColor")
+                elif ty == "date":
+                    self.update_time(colors,"cl_date_TextColor")
+                #self.update_time(colors,'cl_time_TextColor')
+        def choose_font(self,ty):
+            font, ok = QFontDialog.getFont()
+            if ok:
+                if ty == "time":
+                    self.update_time(font.family(),'fontname')
+                elif ty == "date":
+                    self.update_time(font.family(),'cl_date_Typeface')
+
+                #self.update_time(font.family(),'')
+                #self.update_time(font.family(),'fontFamily')
+        def qq_clipboard(self):
+            clipboard = QApplication.clipboard()
+            clipboard.setText('917509031')
+            TeachingTip.create(
+                target=self.qq_clipboard_button,
+                icon=InfoBarIcon.SUCCESS,
+                title='复制成功！',
+                content="快去加入QQ群来一起交流吧！",
+                isClosable=True,
+                #tailPosition=TeachingTipTailPosition.BOTTOM,
+                duration=1000,
+                parent=self
+            )
+        def update_time(self,value,choose):
+            global clock
+            def white_reg():
+                try:
+                    # 创建或打开注册表键
+                    registry_key = reg.CreateKey(reg.HKEY_CURRENT_USER, r'SOFTWARE\LingYunTimes')
+                    # 获取当前设置的值
+                    config[choose] = str(value)
+                    # 将设置写入注册表
+                    reg.SetValueEx(registry_key, choose, 0, reg.REG_SZ, str(value))
+                    clock.update_settings(choose)
+                except Exception as e:
+                    self.error(str(e))
+            if choose == "fontSize" or choose == "x" or choose == "y":
+                white_reg()
+            if choose == "fontname":
+                white_reg()
+                self.Flyout(title="提示",content="重置成功！",target=self.default_time_font_PushButton)
+            elif choose == "comboBox":
+                if value == True:value = "置顶"
+                else:value = "桌面"
+                white_reg()
+            elif choose == "Penetrate":
+                value = str(value)
+                white_reg()
+                self.Flyout(title="提示",content=f"修改成功！重启后生效",target=self.CW7_onof_button)
+            elif choose == "startup":
+                if self.startup_program(value) == False:
+                    self.CW8_onof_button.setChecked(False)
+            
+            def white_reg_new():
+                try:
+                    # 创建或打开注册表键
+                    registry_key = reg.CreateKey(reg.HKEY_CURRENT_USER, r'SOFTWARE\LingYunTimes')
+                    # 获取当前设置的值
+                    config[choose] = str(value)
+                    # 将设置写入注册表
+                    reg.SetValueEx(registry_key, choose, 0, reg.REG_SZ, str(value))
+                    clock.update_settings(choose)
+                except Exception as e:
+                    self.error(str(e))
+            
+            if choose == "cl_Switch" or choose == "cl_time_TextColor" or choose == "cl_date_TextColor" or choose == "cl_Transparent":
+                white_reg_new()
+            elif choose == "cl_date_Switch":
+                white_reg_new()
+            elif choose == "cl_date_mediate":
+                white_reg_new()
+            elif choose == "cl_date_TextSize":
+                white_reg_new()
+            elif choose == "cl_date_Typeface":
+                white_reg_new()
+                self.Flyout(title="提示",content="重置成功！",target=self.default_date_font_PushButton)
+            elif choose == "cl_time_Switch":
+                white_reg_new()
+            elif choose == "cl_date_language":
+                if value == 0:
+                    value = "zh-cn"
+                elif value == 1:
+                    value = "en-us"
+                white_reg_new()
+            elif choose == "cl_time_Second":
+                white_reg_new()
+
+        def error(self,e,msg="错误",grades=False,vas=False):
+            if grades:
+                w = Dialog(msg, str(e)+"\n 此问题非常严重，直接影响程序运行，只能关闭程序，给您带来不便，请谅解。", self)
+                w.yesButton.setText("关闭程序")
+                w.cancelButton.hide()
+                w.buttonLayout.insertStretch(1)
+                if w.exec():
+                    # 停止监听器线程
+                    theme_manager.themeListener.terminate()
+                    theme_manager.themeListener.deleteLater()
+                    QApplication.quit()
+            else:
+                if vas:
+                    w = MessageBox(msg, e, self)
+                    w.yesButton.setText("好")
+                    w.cancelButton.hide()
+                    w.buttonLayout.insertStretch(1)
+                    if w.exec():pass
+                else:
+                    w = MessageBox(msg, e, self)
+                    w.yesButton.setText("关闭程序")
+                    w.cancelButton.setText("忽略错误")
+                    if w.exec():
+                        # 停止监听器线程
+                        theme_manager.themeListener.terminate()
+                        theme_manager.themeListener.deleteLater()
+                        QApplication.quit()
+                    else:pass
+        def initWindow(self):
+            self.resize(900, 700)
+            self.setWindowIcon(QIcon('Resource\ico\LINGYUN.ico'))
+            self.setWindowTitle('凌云班级组件 - 设置 - v' + Version + " " + config.get("setting_title"))
+            self.navigationInterface.setExpandWidth(200)
+            self.navigationInterface.setCollapsible(False)
+        def closeEvent(self, event: QCloseEvent) -> None:
+            #lists['close_sets'] = True
+            self.CardWidget_yun.hide()
+            self.CardWidget_equipment.hide()
+            self.CardWidget_https.hide()
+            self.CardWidget_timeleg.hide()
+            self.CardWidget_json.hide()
+            self.CardWidget_xg.hide()
+
+
+            self.yun_PasswordLineEdit.clear()
+            self.hide()
+            event.ignore()
+        def startup_program(self, zt, program_path=script_full_path, program_name="LingYun_Class_Widgets"):
+            try:
+                # 打开注册表项，为当前用户设置开机启动
+                key = reg.OpenKey(reg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Run", 0, reg.KEY_SET_VALUE)
+                # 设置程序开机启动
+                if zt:
+                    reg.SetValueEx(key, program_name, 0, reg.REG_SZ, program_path)
+                else:
+                    reg.DeleteValue(key, program_name)
+                reg.CloseKey(key)
+                return True
+            except WindowsError:
+                self.error("写入注册表失败，请检查权限是否充足\n或者尝试以管理员身份运行\n最后还是不行可以反馈给开发者。","访问注册表出错")
+                return False
+            except Exception as e:
+                self.error("读写注册表出现问题，以下为详细问题：（请报告给开发者）\n" + str(e))
+                return False
+        def read_startup_program(self,program_name="LingYun_Class_Widgets"):
+            try:
+                key = reg.OpenKey(reg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Run", 0, reg.KEY_READ)
+                try:
+                    reg.QueryValueEx(key, program_name)
+                    return True  # 如果存在，则返回True
+                except FileNotFoundError:
+                    return False  # 如果不存在，则返回False
+                finally:
+                    reg.CloseKey(key)
+            except Exception as e:
+                self.error("读取注册表出现问题，以下为详细问题：（请报告给开发者）\n" + str(e))
+                return False
+    def yaml_to_json(self,yaml_path, json_path):
+        with open(yaml_path, 'r', encoding='utf-8') as yf:
+            data = yaml.safe_load(yf)
+
+        
+        result = [
+            [],   
+            {"1": []},  # default data for Monday
+            {},   
+            {"1": {}},  # default time slots for Monday
+            {},   
+            {
+            "1": {
+                "擦黑板": [
+                    ""
+                ],
+                "倒垃圾": [
+                    ""
+                ],
+                "班级扫地": [
+                    "",
+                    ""
+                ],
+                "班级拖地": [
+                    "",
+                    ""
+                ],
+                "走廊打扫": [
+                    ""
+                ],
+                "包干区": [
+                    "",
+                    ""
+                ]
+            },
+            "2": {
+                "擦黑板": [
+                    ""
+                ],
+                "倒垃圾": [
+                    ""
+                ],
+                "班级扫地": [
+                    "",
+                    ""
+                ],
+                "班级拖地": [
+                    "",
+                    ""
+                ],
+                "走廊打扫": [
+                    ""
+                ],
+                "包干区": [
+                    "",
+                    ""
+                ]
+            },
+            "3": {
+                "擦黑板": [
+                    ""
+                ],
+                "倒垃圾": [
+                    ""
+                ],
+                "班级扫地": [
+                    "",
+                    ""
+                ],
+                "班级拖地": [
+                    "",
+                    ""
+                ],
+                "走廊打扫": [
+                    ""
+                ],
+                "包干区": [
+                    "",
+                    ""
+                ]
+            },
+            "4": {
+                "擦黑板": [
+                    ""
+                ],
+                "倒垃圾": [
+                    ""
+                ],
+                "班级扫地": [
+                    "",
+                    ""
+                ],
+                "班级拖地": [
+                    "",
+                    ""
+                ],
+                "走廊打扫": [
+                    ""
+                ],
+                "包干区": [
+                    "",
+                    ""
+                ]
+            },
+            "5": {
+                "擦黑板": [
+                    ""
+                ],
+                "倒垃圾": [
+                    ""
+                ],
+                "班级扫地": [
+                    "",
+                    ""
+                ],
+                "班级拖地": [
+                    "",
+                    ""
+                ],
+                "走廊打扫": [
+                    ""
+                ],
+                "包干区": [
+                    "",
+                    ""
+                ]
+            },
+            "6": {
+                "擦黑板": [
+                    ""
+                ],
+                "倒垃圾": [
+                    ""
+                ],
+                "班级扫地": [
+                    "",
+                    ""
+                ],
+                "班级拖地": [
+                    "",
+                    ""
+                ],
+                "走廊打扫": [
+                    ""
+                ],
+                "包干区": [
+                    "",
+                    ""
+                ]
+            },
+            "7": {
+                "擦黑板": [
+                    ""
+                ],
+                "倒垃圾": [
+                    ""
+                ],
+                "班级扫地": [
+                    "",
+                    ""
+                ],
+                "班级拖地": [
+                    "",
+                    ""
+                ],
+                "走廊打扫": [
+                    ""
+                ],
+                "包干区": [
+                    "",
+                    ""
+                ]
+            }
+        }
+
+        ]
+        
+        
+        for day in data['schedules']:
+            day_num = day['enable_day']
+            week_type = day['weeks']
+
+            day_data = []
+            time_slots = {}
+            
+            
+            time_periods = set()
+            for cls in day['classes']:
+                start_hour = int(cls['start_time'].split(':')[0])
+                period = "晚上" if start_hour >= 18 else ("下午" if start_hour >= 12 else "上午")
+                time_periods.add(period)
+            
+            
+            for period in sorted(time_periods):
+                day_data.append({period: []})
+                time_slots[period] = []
+            
+            sorted_classes = sorted(day['classes'], key=lambda x: x['start_time'])
+            
+            def parse_time(time_str):
+                formats = ["%H:%M:%S", "%H:%M"] 
+                for fmt in formats:
+                    try:
+                        parsed_time = datetime.strptime(time_str, fmt)
+                        return parsed_time.strftime("%H:%M")  # 统一返回 "时:分" 格式
+                    except ValueError:
+                        continue            
+
+            for cls in sorted_classes:
+                #start = parse_time(cls['start_time'])
+                #end = parse_time(cls['end_time'])
+
+                start = datetime.strptime(cls['start_time'], "%H:%M:%S").strftime("%H:%M")
+                end = datetime.strptime(cls['end_time'], "%H:%M:%S").strftime("%H:%M")
+                time_str = f"{start}-{end}"
+                
+                
+                start_hour = int(start.split(':')[0])
+                time_period = "晚上" if start_hour >= 18 else ("下午" if start_hour >= 12 else "上午")
+                
+                subject = cls['subject'] if cls['subject'] is not None else ""   
+
+
+                for item in day_data:
+                    if time_period in item:
+                        item[time_period].append(subject)
+                        break
+                
+                time_slots[time_period].append(time_str)
+
+
+            if day_num == 1:
+                result[3]["default"] = time_slots.copy()
+                result[4]["default"] = time_slots.copy()
+
+            if week_type == 'odd':
+                result[1][str(day_num)] = day_data
+                result[3][str(day_num)] = time_slots
+            elif week_type == 'even':
+                result[2][str(day_num)] = day_data
+                result[4][str(day_num)] = time_slots
+            elif week_type == 'all':
+                result[1][str(day_num)] = day_data
+                result[2][str(day_num)] = day_data
+                result[3][str(day_num)] = time_slots
+                result[4][str(day_num)] = time_slots
+
+        
+        with open(json_path, 'w', encoding='utf-8') as jf:
+            json.dump(result, jf, ensure_ascii=False, indent=2)
+    def inex(self,value):
+        if value == "import":
+            file_path, _ = QFileDialog.getOpenFileName(self, '选择凌云班级组件的课表文件', '', 'JSON文件(*.json)')
+            if file_path:
+                with open(file_path, 'r', encoding='utf-8') as jf:
+                    data = json.load(jf)
+
+                if len(data) == 6:
+                    if isinstance(data[0], list) and isinstance(data[1], dict) and isinstance(data[2], dict) and isinstance(data[3], dict) and isinstance(data[4], dict) and isinstance(data[5], dict):
+                        destination_dir = 'Resource\\jsons'
+                        os.makedirs(destination_dir, exist_ok=True)
+                        file_name = os.path.basename(file_path)
+                        destination_path = os.path.join(destination_dir, file_name)
+                        shutil.copy(file_path, destination_path)
+                        self.dp_chowidgets_box.currentIndexChanged.disconnect()
+                        self.update_file()
+                        self.Flyout(title="提示",content="导入成功！选择后即可使用。",target=self.dp_import_button)
+                        self.dp_chowidgets_box.currentIndexChanged.connect(lambda value:self.update_dp(value,'dp_widgets'))
+                else:
+                    self.error("您导入的可能不是凌云班级组件生成的课表文件。","导入失败",False,True)
+        elif value == "export":
+            file_path, _ = QFileDialog.getSaveFileName(self, '保存当前课表数据', '', 'JSON文件(*.json)')
+            if file_path:
+                with open(file_path, 'w', encoding='utf-8') as jf:
+                    json.dump(class_all, jf, ensure_ascii=False, indent=2)
+                    
+                    self.Flyout(title="提示",content=f"导出成功！\n已保存在{file_path}。",target=self.dp_export_button)
+        elif value == "openwidgets":
+            os.startfile('Resource\\jsons')
+        elif value == "dp_widgets":
+            self.error("重启软件后生效。","提示",False,False)
+        elif value == "exescs":
+            file_path, _ = QFileDialog.getSaveFileName(self, '保存为CSES通用格式', '', 'CSES文件(*.yaml)')
+            if file_path:
+                self.json_to_yaml(f'Resource\\jsons\\{config.get("dp_widgets")}',file_path)
+                self.Flyout(title="转换并导出成功！",content=f"\n已保存在{file_path}。",target=self.dp_exescs_button)
+        elif value == "imescs":
+            if self.lcw_Group.checkedButton() == None:
+                self.error("即这个CSES课表从哪个课表软件导出的。","请先选择一个导出源",False,True)
+                return
+            flag = True
+            file_path, _ = QFileDialog.getOpenFileName(self, '选择CSES通用格式文件', '', 'CSES文件(*.yaml *.yml)')
+
+            if file_path:
+                if self.lcw_Group.checkedButton().text() == "凌云班级组件":
+                    name = os.path.basename(file_path).split('.')[0]
+                    try:
+                        self.yaml_to_json(file_path, f'Resource\\jsons\\{name}.json')
+                    except Exception as e:
+                        error = e
+                        flag = False
+                elif self.lcw_Group.checkedButton().text() == "Class Widgets":
+                    name = os.path.basename(file_path).split('.')[0]
+                    try:
+                        self.yaml_to_json_class_widgets(file_path, f'Resource\\jsons\\{name}.json')
+                    except Exception as e:
+                        error = e
+                        flag = False
+                if flag == False:
+                    self.error(f"您可能选择了错误的导出源，或者目前还未适配该源。\n建议向开发者反馈以获得帮助。\n以下为错误信息：\n{error}","转换失败",False,True)
+                else:
+
+                    self.dp_chowidgets_box.currentIndexChanged.disconnect()
+                    self.update_file()
+                    self.Flyout(title="提示",content="导入成功！选择后即可使用。",target=self.dp_imescs_button)
+                    self.dp_chowidgets_box.currentIndexChanged.connect(lambda value:self.update_dp(value,'dp_widgets'))
+    def yaml_to_json_class_widgets(self,yaml_path, json_path):
+        with open(yaml_path, 'r', encoding='utf-8') as yf:
+            yaml_data = yaml.safe_load(yf)
+
+        result = [[],{},{},{},{},{}]
+
+        time_slots = {}
+        period_info = {}
+
+        if 'schedules' in yaml_data:
+            for schedule in yaml_data['schedules']:
+                
+                period = schedule['name'].split('_')[0]
+                
+                
+                if schedule.get('classes'):
+                    start_time = schedule['classes'][0]['start_time']
+                    if period not in period_info or start_time < period_info[period]['earliest_time']:
+                        period_info[period] = {
+                            'earliest_time': start_time,
+                            'name': period
+                        }
+                
+                
+                if period not in time_slots:
+                    time_slots[period] = []
+                    
+                
+                for cls in schedule.get('classes', []):
+                    time_str = f"{cls['start_time']}-{cls['end_time']}"
+                    if time_str not in time_slots[period]:
+                        time_slots[period].append(time_str)
+        
+        
+        sorted_periods = sorted(period_info.values(), key=lambda x: x['earliest_time'])
+        period_names = [p['name'] for p in sorted_periods]
+        
+        
+        for day in range(1, 8):
+            day_str = str(day)
+            result[1][day_str] = []
+            result[2][day_str] = []
+            for period in period_names:
+                result[1][day_str].append({period: []})
+                result[2][day_str].append({period: []})
+            result[3][day_str] = {}
+            result[4][day_str] = {}
+            for period in period_names:
+                result[3][day_str][period] = time_slots.get(period, [""])
+                result[4][day_str][period] = time_slots.get(period, [""])
+            result[5][day_str] = {
+                "擦黑板": [""],
+                "倒垃圾": [""],
+                "班级扫地": ["", ""],
+                "班级拖地": ["", ""],
+                "走廊打扫": [""],
+                "包干区": ["", ""]
+            }
+            if 'duty' in yaml_data and day_str in yaml_data['duty']:
+                for duty_type, names in yaml_data['duty'][day_str].items():
+                    if duty_type in result[5][day_str]:
+                        result[5][day_str][duty_type] = names if isinstance(names, list) else [names]
+
+            for schedule in yaml_data.get('schedules', []):
+                if str(schedule['enable_day']) == day_str and 'duty' in schedule:
+                    for duty_type, names in schedule['duty'].items():
+                        if duty_type in result[5][day_str]:
+                            if isinstance(names, list):
+                                result[5][day_str][duty_type] = names
+                            else:
+                                result[5][day_str][duty_type] = [names]
+
+        if 'schedules' in yaml_data:
+            schedule_groups = {}
+            for schedule in yaml_data['schedules']:
+                day_str = str(schedule['enable_day'])
+                week_type = schedule.get('weeks', 'all')
+                key = (day_str, week_type)
+                if key not in schedule_groups:
+                    schedule_groups[key] = []
+                schedule_groups[key].append(schedule)
+
+            for day in range(1, 8):
+                day_str = str(day)
+                result[1][day_str] = []
+                result[2][day_str] = []
+                for period in period_names:
+                    result[1][day_str].append({period: []})
+                    result[2][day_str].append({period: []})
+
+            for (day_str, week_type), schedules in schedule_groups.items():
+                for schedule in schedules:
+                    for class_info in schedule.get('classes', []):
+                        period = schedule['name'].split('_')[0]
+                        subject = class_info.get('subject', '')
+                        time_str = f"{class_info['start_time']}-{class_info['end_time']}"
+                        targets = []
+                        if week_type == 'all':
+                            targets = [result[1], result[2]]
+                        elif week_type == 'odd':
+                            targets = [result[1]]
+                        else:   
+                            targets = [result[2]]
+                        for target in targets:
+                            period_obj = None
+                            for item in target[day_str]:
+                                if period in item:
+                                    period_obj = item
+                                    break
+                            
+                            if period_obj:
+                                required_length = len(time_slots.get(period, []))
+                                while len(period_obj[period]) < required_length:
+                                    period_obj[period].append("")
+                                if period in time_slots and time_str in time_slots[period]:
+                                    idx = time_slots[period].index(time_str)
+                                    if idx < len(period_obj[period]):
+                                        period_obj[period][idx] = subject
+                if day_str == "1":
+                    result[3]["default"] = time_slots.copy()
+                    result[4]["default"] = time_slots.copy()
+        try:
+            with open(json_path, 'w', encoding='utf-8') as jf:
+                json.dump(result, jf, ensure_ascii=False, indent=2)
+        except Exception as e:
+            print(f"写入文件时出错: {str(e)}")
+    def update_file(self):
+        self.dp_chowidgets_box.clear()
+        all_widgets = os.listdir('Resource/jsons/')
+        json_widgets = [f for f in all_widgets if f.endswith('.json')]
+        self.json_widgets = [file.replace('.json', '') for file in json_widgets]  # 去掉文件扩展名
+        self.dp_chowidgets_box.addItems(self.json_widgets)
+        self.dp_chowidgets_box.setCurrentIndex(self.json_widgets.index(config.get("dp_widgets").split(".")[0]))
+
 
 # 息屏显示
 class BlackScreen(QWidget):
@@ -2437,20 +3878,23 @@ class BlackScreen(QWidget):
 
     def initUI(self,notime):
         global DP_Comonent
-        screen = QGuiApplication.primaryScreen()  # 获取主屏幕
-        screen_geometry = screen.geometry()  # 获取屏幕的几何信息
+        screen = QGuiApplication.primaryScreen()
+        screen_geometry = screen.geometry()
         w_width = screen_geometry.width()  # 屏幕宽度
         w_height = screen_geometry.height()  # 屏幕高度
+
+
 
         if notime == True:
             DP_Comonent.dc_dp("notime")
         else:
             DP_Comonent.dc_dp("open")
         
-        # 设置窗口标题和大小（这里假设您想要全屏）
+        # 设置窗口标题和大小
         self.setWindowTitle('LingYun Class Widgets Black Screen')
         #self.setWindowFlags(Qt.FramelessWindowHint)
         #self.setAttribute(Qt.WA_TranslucentBackground)
+        #self.setWindowFlags(self.windowFlags() | Qt.WindowDoesNotAcceptFocus)
         self.setGeometry(0, 0, w_width, w_height)
 
 
@@ -2497,8 +3941,8 @@ class BlackScreen(QWidget):
         # 连接按钮点击事件
         self.button.clicked.connect(self.up_close)
 
-        #self.dc()
-    
+
+
     def dc(self):
         screen = QGuiApplication.primaryScreen()  # 获取主屏幕
         screen_geometry = screen.geometry()  # 获取屏幕的几何信息
@@ -2581,8 +4025,8 @@ class ThemeManager(QObject):
 
 # 桌面组件
 class Desktop_Component(QWidget):
-    def __init__(self, parent=None):
-        super().__init__(parent)
+    def __init__(self, ):
+        super().__init__()
         #self.task_queue = queue.Queue()
         #self.events = threading.Event()
         #self.counter = 0
@@ -2591,7 +4035,6 @@ class Desktop_Component(QWidget):
         self.dc = False # 息屏标志
 
         self.initUI()
-
     def initUI(self):
         global display_x, display_y
         screen = QGuiApplication.primaryScreen()  # 获取主屏幕
@@ -2600,7 +4043,12 @@ class Desktop_Component(QWidget):
         display_y = screen_geometry.height()  # 屏幕高度
         
         self.setWindowFlags(Qt.SplashScreen | Qt.FramelessWindowHint)
+
+        self.setWindowFlags(self.windowFlags() | Qt.WindowDoesNotAcceptFocus)
+        
         self.setAttribute(Qt.WA_TranslucentBackground)  # 使背景透明
+
+
         if config.get('dp_Pin') == 'True':
             self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
 
@@ -2632,6 +4080,8 @@ class Desktop_Component(QWidget):
             self.show()
             self.animation_show.start()
             self.animation_rect_show.start()
+    def showEvent(self, event):
+        self.lower()
     def mousePressEvent(self, event):
         # 获取窗口的坐标位置
         window_pos = self.frameGeometry().topLeft()
@@ -2837,7 +4287,6 @@ class Desktop_Component(QWidget):
         elif choose == "dp_display_edge":
             pass
             #self.DP_x = display_x - int(config.get("dp_display_edge"))
-
     def dc_dp(self,event):
         if event == "open":
             self.dc = True
@@ -2870,8 +4319,6 @@ class Desktop_Component(QWidget):
             self.duty_name_widget.setStyleSheet("color: rgba(0, 0, 0, 255)")
             self.duty_project_widget.setStyleSheet("color: rgba(0, 0, 0, 255)")
             self.show()
-
-
     def font_files(self,file,font_name):
         # 加载字体文件
         #global da tas
@@ -2887,8 +4334,6 @@ class Desktop_Component(QWidget):
             else:
                 font = "微软雅黑"
         return font
-
-
     def update_color(self):
         if self.dc:
             if self.cols[4] == 0:
@@ -2935,7 +4380,6 @@ class Desktop_Component(QWidget):
                 self.todayclass_background.setStyleSheet("background-color: rgba(255, 255, 255, 255);border-radius: 10px")
             elif theme == "dark":
                 self.todayclass_background.setStyleSheet("background-color: rgba(0, 0, 0, 255);border-radius: 10px")
-
     def TOPIC(self):
         if self.dc == False:
             theme = "dark" if isDarkTheme() else "light"
@@ -2986,17 +4430,12 @@ class Desktop_Component(QWidget):
                 self.todayclass_background.setStyleSheet("background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:1, y2:0, stop:0 rgba(68, 5, 45, 255), stop:1 rgba(0, 0, 0, 255));border-radius: 10px")
             else:
                 self.todayclass_background.setStyleSheet("background-color: rgba(0, 0, 0, 255);border-radius: 10px")
-
     def closeEvent(self, event: QCloseEvent) -> None:
-        """if lists['close_sets']:
+        #event.accept()
+        if not is_system_shutting_down():
             event.ignore()
-            lists['close_sets'] = False
-        else:"""
-        event.accept()
-
     def update_widget(self): # 暂不使用
         # 新！该def更新课程表和时间表（初始化时调用1次）
-        print(today_widget)
 
         times_today = []
         widgets_today = []
@@ -3048,7 +4487,6 @@ class Desktop_Component(QWidget):
                     self.class_ORD_i = self.class_ORD_i + ORDs + "\n"
             self.Widgets_ORD.setText(self.class_ORD_i)
             self.Widgets.setText(self.class_i)
-
     def update_duty(self):
         # 该def更新值日生表（初始化时调用1次）
         global duty_table,adj_weekday
@@ -3071,7 +4509,6 @@ class Desktop_Component(QWidget):
             name = name + "\n"
         self.duty_project_widget.setText(project)
         self.duty_name_widget.setText(name)
-
     def update_countdown(self):
         # 新！该def为倒计时模块上下课服务（计时器调用）
         now = datetime.now()
@@ -3126,13 +4563,11 @@ class Desktop_Component(QWidget):
             self.lingyun_Bar.setCustomBarColor(QColor(config.get("dp_Countdown_color_next_down")), QColor(config.get("dp_Countdown_color_next_down")))
             self.warn_function("warn.ui")
             #QTimer.singleShot(1000,lambda: warn.ui("next_down"))
-
     def warning(self,defs):
         if defs == "alert":
             QTimer.singleShot(1000,lambda: self.alert(1))
         elif defs == "warn.ui":
             QTimer.singleShot(1000,lambda: warn.ui("next_down"))
-
     def class_coming(self): #待检修(检修1次)
         # 该def为检测是否快开始上课（计时器调用）
 
@@ -3188,7 +4623,6 @@ class Desktop_Component(QWidget):
                 self.coming_time.stop()
                 self.warn_function("alert")
                 #QTimer.singleShot(1000,lambda: self.alert(1))
-
     def alert(self,st = None):
         global DP_Comonent
  
@@ -3246,8 +4680,6 @@ class Desktop_Component(QWidget):
         #print("课程数量是：",course_widget)
         #print("课程时间是：",time_widget)
         #print("过渡时间是：",guo_widget)
-
-
     def wav(self, value, vas):
         if vas == "True":
             devices = AudioUtilities.GetSpeakers()
@@ -3530,8 +4962,10 @@ class SystemTrayMenus(SystemTrayMenu):
         restart = Action(FluentIcon.UPDATE,'重启本软件', self)
         restart.triggered.connect(restart_program)
 
+        helps = Action(FluentIcon.HELP,'帮助与支持', self)
+        helps.triggered.connect(lambda: webbrowser.open("https://www.yuque.com/yamikani/shrqm0/zlb4xtflki2flnw2"))
         
-        # 添加退出操作
+
         quit_action = Action(FluentIcon.CLOSE,'退出', self)
         quit_action.triggered.connect(self.exit_app)
         
@@ -3539,6 +4973,8 @@ class SystemTrayMenus(SystemTrayMenu):
         menu.addAction(black_screen)
         menu.addAction(black_screen_action)
         menu.addAction(restart)
+        menu.addAction(helps)
+        menu.addSeparator()
         menu.addAction(quit_action)
 
         
@@ -3627,6 +5063,16 @@ class Yun_warn(QWidget):
         #timer.start()
 
 
+def is_system_shutting_down():
+    # 检查系统是否正在关机
+    for proc in psutil.process_iter(['pid', 'name']):
+        if proc.info['name'] == 'shutdown':
+            print("System is shutting down.")
+            return True
+    print("System is not shutting down.")
+    return False
+
+
 # 获取启动参数
 """arg = ''
 def get_argument():
@@ -3650,7 +5096,7 @@ def restart_program():
     python = sys.executable
     os.execl(python, python, *sys.argv)
 
-# 检查多开 （暂时不用）
+# 检查多开（暂时不用）
 def is_program_running():
     pid_file = '/tmp/LingYun.pid'#"/Resource/tmp/LingYun.pid"
     if os.path.isfile(pid_file):
@@ -3682,5 +5128,6 @@ if __name__ == '__main__':
     CLSCTX_ALL = CLSCTX_INPROC_HANDLER | CLSCTX_SERVER
     app = QApplication(sys.argv)
     main = Initialization()
+    main.init()
     sys.excepthook = main.handle_exception
     sys.exit(app.exec_())

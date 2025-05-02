@@ -134,7 +134,7 @@
    <property name="styleSheet">
     <string notr="true">background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:1, y2:0, stop:0 rgba(255, 225, 245, 255), stop:1 rgba(255, 255, 255, 255));
 
-border-radius: 8px</string>
+border-radius: 10px</string>
    </property>
    <property name="text">
     <string/>
@@ -242,8 +242,9 @@ font-weight: bold;</string>
     </rect>
    </property>
    <property name="styleSheet">
-    <string notr="true">background-color: qconicalgradient(cx:0.506, cy:1, angle:202.5, stop:0.255682 rgba(129, 52, 225, 255), stop:0.761364 rgba(255, 255, 255, 255));
-border-radius: 8px</string>
+    <string notr="true">background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:1, y2:0, stop:0 rgba(255, 225, 245, 255), stop:1 rgba(255, 255, 255, 255));
+
+border-radius: 10px</string>
    </property>
    <property name="text">
     <string/>
@@ -290,8 +291,9 @@ font-weight: bold;</string>
     </rect>
    </property>
    <property name="styleSheet">
-    <string notr="true">background-color: rgba(0, 243, 245, 255);
-border-radius: 8px</string>
+    <string notr="true">background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:1, y2:0, stop:0 rgba(255, 225, 245, 255), stop:1 rgba(255, 255, 255, 255));
+
+border-radius: 10px</string>
    </property>
    <property name="text">
     <string/>
@@ -448,8 +450,9 @@ font-weight: bold;</string>
     </rect>
    </property>
    <property name="styleSheet">
-    <string notr="true">background-color: qconicalgradient(cx:0.506, cy:1, angle:202.5, stop:0.255682 rgba(129, 52, 225, 255), stop:0.761364 rgba(255, 255, 255, 255));
-border-radius: 8px</string>
+    <string notr="true">background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:1, y2:0, stop:0 rgba(255, 225, 245, 255), stop:1 rgba(255, 255, 255, 255));
+
+border-radius: 10px</string>
    </property>
    <property name="text">
     <string/>
