@@ -4,13 +4,13 @@
 
 ![介绍](https://i0.hdslb.com/bfs/archive/7a15536280eb0b5501d384f9141bfdc97f9bb6d6.jpg)
 
-如果有什么问题可以在我的bilibili上进行交流。
+有不足之处或BUG欢迎提出！
 
-[anchor-id]: http://www.this-anchor-link.com/
 
 [点击这里](https://space.bilibili.com/627622081) 进入我的bilibili
 
-# 在此对于说明改版于Class Widgets的，再次说明：只是使用了相同的框架（技术栈）可以对比代码，风格和顺序是完全不一样的，请对比后再说！
+[点击这里](https://www.yuque.com/yamikani/shrqm0/zlb4xtflki2flnw2)查看介绍及使用方法
 
 
-提示：本作品在部分地方使用了Class Widgets的部分代码，该仓库地址：https://github.com/Class-Widgets/Class-Widgets ，并且会在v1.5.8版（待发布）中【设置->关于本软件->致谢】中详细说明。
+提示：本作品在部分地方使用了Class Widgets的部分代码，该仓库地址：https://github.com/Class-Widgets/Class-Widgets ，并且会在v1.5.9版中【设置->关于本软件->致谢】中详细说明。
+
