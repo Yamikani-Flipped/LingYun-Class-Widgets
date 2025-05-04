@@ -1,4 +1,4 @@
-# 凌云班级课表 LingYun Class Widgets
+# 凌云班级组件 LingYun Class Widgets
 
 全新的班级课表和桌面时间，不一样的桌面体验
 
