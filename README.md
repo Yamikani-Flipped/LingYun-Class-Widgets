@@ -2,7 +2,7 @@
 
 全新的班级课表和桌面时间，不一样的桌面体验
 
-![介绍](https://i0.hdslb.com/bfs/archive/7a15536280eb0b5501d384f9141bfdc97f9bb6d6.jpg)
+![介绍](Resource/png/凌云班级组件.png)
 
 有不足之处或BUG欢迎提出！
 
