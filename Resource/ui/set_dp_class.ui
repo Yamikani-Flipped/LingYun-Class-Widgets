@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>738</width>
-    <height>2317</height>
+    <height>2688</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -87,7 +87,7 @@
         <x>0</x>
         <y>0</y>
         <width>690</width>
-        <height>2651</height>
+        <height>2943</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_9">
@@ -626,7 +626,7 @@ ComboBox[isPlaceholderText=true] {
                    </sizepolicy>
                   </property>
                   <property name="text">
-                   <string>导入ESCS通用课表</string>
+                   <string>导入CSES通用课表</string>
                   </property>
                  </widget>
                 </item>
@@ -672,7 +672,7 @@ ComboBox[isPlaceholderText=true] {
                   <item>
                    <widget class="StrongBodyLabel" name="StrongBodyLabel_2">
                     <property name="text">
-                     <string>请选择ESCS课表导出源：（请正确选择）</string>
+                     <string>请选择CSES课表导出源：（请正确选择）</string>
                     </property>
                    </widget>
                   </item>
@@ -743,7 +743,7 @@ ComboBox[isPlaceholderText=true] {
                    </sizepolicy>
                   </property>
                   <property name="text">
-                   <string>将当前的课表导出为ESCS通用课表</string>
+                   <string>将当前的课表导出为CSES通用课表</string>
                   </property>
                  </widget>
                 </item>
@@ -1642,6 +1642,53 @@ ComboBox[isPlaceholderText=true] {
           </widget>
          </item>
          <item>
+          <widget class="CardWidget" name="CardWidget_32">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>70</height>
+            </size>
+           </property>
+           <layout class="QHBoxLayout" name="horizontalLayout_45">
+            <property name="leftMargin">
+             <number>16</number>
+            </property>
+            <property name="topMargin">
+             <number>16</number>
+            </property>
+            <property name="rightMargin">
+             <number>16</number>
+            </property>
+            <property name="bottomMargin">
+             <number>16</number>
+            </property>
+            <item>
+             <layout class="QVBoxLayout" name="verticalLayout_37">
+              <property name="spacing">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="StrongBodyLabel" name="CW2_label_12">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string>双击组件时的操作</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <widget class="ComboBox" name="Curriculum_ramp_ComboBox"/>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
           <widget class="SubtitleLabel" name="SubtitleLabel_2">
            <property name="text">
             <string>“倒计时”卡片</string>
@@ -1698,6 +1745,53 @@ ComboBox[isPlaceholderText=true] {
                <string>禁用</string>
               </property>
              </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="CardWidget" name="CardWidget_31">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>70</height>
+            </size>
+           </property>
+           <layout class="QHBoxLayout" name="horizontalLayout_44">
+            <property name="leftMargin">
+             <number>16</number>
+            </property>
+            <property name="topMargin">
+             <number>16</number>
+            </property>
+            <property name="rightMargin">
+             <number>16</number>
+            </property>
+            <property name="bottomMargin">
+             <number>16</number>
+            </property>
+            <item>
+             <layout class="QVBoxLayout" name="verticalLayout_36">
+              <property name="spacing">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="StrongBodyLabel" name="CW2_label_11">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string>双击组件时的操作</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <widget class="ComboBox" name="countdown_ComboBox"/>
             </item>
            </layout>
           </widget>
@@ -2001,6 +2095,53 @@ ComboBox[isPlaceholderText=true] {
           </widget>
          </item>
          <item>
+          <widget class="CardWidget" name="CardWidget_30">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>70</height>
+            </size>
+           </property>
+           <layout class="QHBoxLayout" name="horizontalLayout_43">
+            <property name="leftMargin">
+             <number>16</number>
+            </property>
+            <property name="topMargin">
+             <number>16</number>
+            </property>
+            <property name="rightMargin">
+             <number>16</number>
+            </property>
+            <property name="bottomMargin">
+             <number>16</number>
+            </property>
+            <item>
+             <layout class="QVBoxLayout" name="verticalLayout_35">
+              <property name="spacing">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="StrongBodyLabel" name="CW2_label_10">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string>双击组件时的操作</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <widget class="ComboBox" name="todayclass_ComboBox"/>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
           <widget class="SubtitleLabel" name="SubtitleLabel_4">
            <property name="text">
             <string>“值日生”卡片</string>
@@ -2124,6 +2265,53 @@ ComboBox[isPlaceholderText=true] {
                <string>禁用</string>
               </property>
              </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="CardWidget" name="CardWidget_29">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>70</height>
+            </size>
+           </property>
+           <layout class="QHBoxLayout" name="horizontalLayout_42">
+            <property name="leftMargin">
+             <number>16</number>
+            </property>
+            <property name="topMargin">
+             <number>16</number>
+            </property>
+            <property name="rightMargin">
+             <number>16</number>
+            </property>
+            <property name="bottomMargin">
+             <number>16</number>
+            </property>
+            <item>
+             <layout class="QVBoxLayout" name="verticalLayout_34">
+              <property name="spacing">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="StrongBodyLabel" name="CW2_label_9">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string>双击组件时的操作</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <widget class="ComboBox" name="duty_ComboBox"/>
             </item>
            </layout>
           </widget>

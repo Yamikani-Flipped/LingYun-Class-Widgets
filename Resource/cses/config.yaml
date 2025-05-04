@@ -1,0 +1,383 @@
+version: 1
+subjects:
+- name: 语文
+  simplified_name: 语
+  teacher: ''
+  room: ''
+- name: 生物
+  simplified_name: 生
+  teacher: ''
+  room: ''
+- name: 体育
+  simplified_name: 体
+  teacher: ''
+  room: ''
+- name: 自习
+  simplified_name: 自
+  teacher: ''
+  room: ''
+- name: 英语
+  simplified_name: 英
+  teacher: ''
+  room: ''
+- name: 化学练习
+  simplified_name: 化
+  teacher: ''
+  room: ''
+- name: 历史
+  simplified_name: 历
+  teacher: ''
+  room: ''
+- name: 物理
+  simplified_name: 物
+  teacher: ''
+  room: ''
+- name: 化学
+  simplified_name: 化
+  teacher: ''
+  room: ''
+- name: 地理
+  simplified_name: 地
+  teacher: ''
+  room: ''
+- name: 通用技术
+  simplified_name: 通
+  teacher: ''
+  room: ''
+- name: 政治
+  simplified_name: 政
+  teacher: ''
+  room: ''
+- name: 生物练习
+  simplified_name: 生
+  teacher: ''
+  room: ''
+- name: 班会
+  simplified_name: 班
+  teacher: ''
+  room: ''
+- name: 地理练习
+  simplified_name: 地
+  teacher: ''
+  room: ''
+- name: 数学
+  simplified_name: 数
+  teacher: ''
+  room: ''
+- name: 音乐
+  simplified_name: 音
+  teacher: ''
+  room: ''
+- name: 外语
+  simplified_name: 外
+  teacher: ''
+  room: ''
+schedules:
+- name: 星期1-单周
+  enable_day: 1
+  weeks: odd
+  classes:
+  - subject: 语文
+    start_time: 08:00:00
+    end_time: 08:45:00
+    room: '101'
+  - subject: 英语
+    start_time: 08:55:00
+    end_time: 09:40:00
+    room: '102'
+  - subject: 地理
+    start_time: '10:10:00'
+    end_time: '10:55:00'
+    room: '103'
+  - subject: 物理
+    start_time: '11:10:00'
+    end_time: '11:50:00'
+    room: '104'
+  - subject: 历史
+    start_time: '14:10:00'
+    end_time: '14:50:00'
+    room: '105'
+  - subject: 化学
+    start_time: '15:05:00'
+    end_time: '15:45:00'
+    room: '106'
+  - subject: 数学
+    start_time: '15:55:00'
+    end_time: '16:35:00'
+    room: '107'
+  - subject: 班会
+    start_time: '16:45:00'
+    end_time: '17:25:00'
+    room: '108'
+  - subject: 自习
+    start_time: '18:30:00'
+    end_time: '20:30:00'
+    room: '109'
+- name: 星期2-单周
+  enable_day: 2
+  weeks: odd
+  classes:
+  - subject: 语文
+    start_time: 08:00:00
+    end_time: 08:45:00
+    room: '201'
+  - subject: 英语
+    start_time: 08:55:00
+    end_time: 09:40:00
+    room: '202'
+  - subject: 体育
+    start_time: '10:10:00'
+    end_time: '10:55:00'
+    room: '203'
+  - subject: 数学
+    start_time: '11:10:00'
+    end_time: '11:50:00'
+    room: '204'
+  - subject: 音乐
+    start_time: '14:10:00'
+    end_time: '14:50:00'
+    room: '205'
+  - subject: 政治
+    start_time: '15:05:00'
+    end_time: '15:45:00'
+    room: '206'
+  - subject: 生物
+    start_time: '15:55:00'
+    end_time: '16:35:00'
+    room: '207'
+  - subject: 生物练习
+    start_time: '16:45:00'
+    end_time: '17:25:00'
+    room: '208'
+  - subject: 自习
+    start_time: '18:30:00'
+    end_time: '20:30:00'
+    room: '209'
+- name: 星期3-单周
+  enable_day: 3
+  weeks: odd
+  classes:
+  - subject: 化学
+    start_time: 08:00:00
+    end_time: 08:45:00
+    room: '301'
+  - subject: 生物
+    start_time: 08:55:00
+    end_time: 09:40:00
+    room: '302'
+  - subject: 数学
+    start_time: '10:10:00'
+    end_time: '10:55:00'
+    room: '303'
+  - subject: 数学
+    start_time: '11:10:00'
+    end_time: '11:50:00'
+    room: '304'
+  - subject: 外语
+    start_time: '14:10:00'
+    end_time: '14:50:00'
+    room: '305'
+  - subject: 语文
+    start_time: '15:05:00'
+    end_time: '15:45:00'
+    room: '306'
+  - subject: 体育
+    start_time: '15:55:00'
+    end_time: '16:35:00'
+    room: '307'
+  - subject: 地理练习
+    start_time: '16:45:00'
+    end_time: '17:25:00'
+    room: '308'
+  - subject: 自习
+    start_time: '18:30:00'
+    end_time: '20:30:00'
+    room: '309'
+- name: 星期4-单周
+  enable_day: 4
+  weeks: odd
+  classes:
+  - subject: 英语
+    start_time: 08:00:00
+    end_time: 08:45:00
+    room: '401'
+  - subject: 语文
+    start_time: 08:55:00
+    end_time: 09:40:00
+    room: '402'
+  - subject: 历史
+    start_time: '10:10:00'
+    end_time: '10:55:00'
+    room: '403'
+  - subject: 物理
+    start_time: '11:10:00'
+    end_time: '11:50:00'
+    room: '404'
+  - subject: 数学
+    start_time: '14:10:00'
+    end_time: '14:50:00'
+    room: '405'
+  - subject: 化学
+    start_time: '15:05:00'
+    end_time: '15:45:00'
+    room: '406'
+  - subject: 地理
+    start_time: '15:55:00'
+    end_time: '16:35:00'
+    room: '407'
+  - subject: 化学练习
+    start_time: '16:45:00'
+    end_time: '17:25:00'
+    room: '408'
+  - subject: 自习
+    start_time: '18:30:00'
+    end_time: '20:30:00'
+    room: '409'
+- name: 星期5-单周
+  enable_day: 5
+  weeks: odd
+  classes:
+  - subject: 物理
+    start_time: 08:00:00
+    end_time: 08:45:00
+    room: '501'
+  - subject: 英语
+    start_time: 08:55:00
+    end_time: 09:40:00
+    room: '502'
+  - subject: 数学
+    start_time: '10:10:00'
+    end_time: '10:55:00'
+    room: '503'
+  - subject: 生物
+    start_time: '11:10:00'
+    end_time: '11:50:00'
+    room: '504'
+  - subject: 通用技术
+    start_time: '14:10:00'
+    end_time: '14:50:00'
+    room: '505'
+  - subject: 政治
+    start_time: '15:05:00'
+    end_time: '15:45:00'
+    room: '506'
+  - subject: 语文
+    start_time: '15:55:00'
+    end_time: '16:35:00'
+    room: '507'
+  - subject: null
+    start_time: '16:45:00'
+    end_time: '17:25:00'
+    room: '508'
+  - subject: null
+    start_time: '18:30:00'
+    end_time: '20:30:00'
+    room: '509'
+- name: 星期6-单周
+  enable_day: 6
+  weeks: odd
+  classes:
+  - subject: null
+    start_time: 08:00:00
+    end_time: 08:45:00
+    room: '601'
+  - subject: null
+    start_time: 08:55:00
+    end_time: 09:40:00
+    room: '602'
+  - subject: null
+    start_time: '10:10:00'
+    end_time: '10:55:00'
+    room: '603'
+  - subject: null
+    start_time: '11:10:00'
+    end_time: '11:50:00'
+    room: '604'
+  - subject: null
+    start_time: '14:10:00'
+    end_time: '14:50:00'
+    room: '605'
+  - subject: null
+    start_time: '15:05:00'
+    end_time: '15:45:00'
+    room: '606'
+  - subject: null
+    start_time: '15:55:00'
+    end_time: '16:35:00'
+    room: '607'
+  - subject: null
+    start_time: '16:45:00'
+    end_time: '17:25:00'
+    room: '608'
+  - subject: null
+    start_time: '18:30:00'
+    end_time: '20:30:00'
+    room: '609'
+- name: 星期7-单周
+  enable_day: 7
+  weeks: odd
+  classes:
+  - subject: null
+    start_time: 07:50:00
+    end_time: 08:35:00
+    room: '701'
+  - subject: null
+    start_time: 08:45:00
+    end_time: 09:30:00
+    room: '702'
+  - subject: null
+    start_time: 09:50:00
+    end_time: '10:35:00'
+    room: '703'
+  - subject: null
+    start_time: '10:45:00'
+    end_time: '11:30:00'
+    room: '704'
+  - subject: null
+    start_time: '14:10:00'
+    end_time: '14:50:00'
+    room: '705'
+  - subject: null
+    start_time: '15:05:00'
+    end_time: '15:45:00'
+    room: '706'
+  - subject: null
+    start_time: '15:55:00'
+    end_time: '16:35:00'
+    room: '707'
+  - subject: null
+    start_time: '16:45:00'
+    end_time: '17:25:00'
+    room: '708'
+  - subject: 自习
+    start_time: '18:30:00'
+    end_time: '20:30:00'
+    room: '709'
+- name: 星期1-双周
+  enable_day: 1
+  weeks: even
+  classes: []
+- name: 星期2-双周
+  enable_day: 2
+  weeks: even
+  classes: []
+- name: 星期3-双周
+  enable_day: 3
+  weeks: even
+  classes: []
+- name: 星期4-双周
+  enable_day: 4
+  weeks: even
+  classes: []
+- name: 星期5-双周
+  enable_day: 5
+  weeks: even
+  classes: []
+- name: 星期6-双周
+  enable_day: 6
+  weeks: even
+  classes: []
+- name: 星期7-双周
+  enable_day: 7
+  weeks: even
+  classes: []
