@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>738</width>
-    <height>2688</height>
+    <height>2987</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -87,7 +87,7 @@
         <x>0</x>
         <y>0</y>
         <width>690</width>
-        <height>2943</height>
+        <height>2926</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_9">
@@ -1537,8 +1537,7 @@ ComboBox[isPlaceholderText=true] {
               <item>
                <widget class="CaptionLabel" name="CW6_label_17">
                 <property name="text">
-                 <string>如果不了解此选项，请不要随意更改，一般只在自定义桌面组件时调整。
-重启后生效。</string>
+                 <string>目前已支持根据UI文件自动匹配，无需修改，将会移除。</string>
                 </property>
                 <property name="wordWrap">
                  <bool>true</bool>
@@ -1563,6 +1562,9 @@ ComboBox[isPlaceholderText=true] {
             </item>
             <item>
              <widget class="SpinBox" name="dp_display_edge_SpinBox">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
               <property name="minimumSize">
                <size>
                 <width>150</width>
@@ -1784,7 +1786,7 @@ ComboBox[isPlaceholderText=true] {
                  </sizepolicy>
                 </property>
                 <property name="text">
-                 <string>双击组件时的操作</string>
+                 <string>右键组件时的操作</string>
                 </property>
                </widget>
               </item>
@@ -2129,7 +2131,7 @@ ComboBox[isPlaceholderText=true] {
                  </sizepolicy>
                 </property>
                 <property name="text">
-                 <string>双击组件时的操作</string>
+                 <string>右键组件时的操作</string>
                 </property>
                </widget>
               </item>
@@ -2304,7 +2306,7 @@ ComboBox[isPlaceholderText=true] {
                  </sizepolicy>
                 </property>
                 <property name="text">
-                 <string>双击组件时的操作</string>
+                 <string>右键组件时的操作</string>
                 </property>
                </widget>
               </item>

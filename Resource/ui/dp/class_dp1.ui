@@ -458,6 +458,19 @@ border-radius: 10px</string>
     <string/>
    </property>
   </widget>
+  <widget class="QLabel" name="ui_info">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>0</y>
+     <width>621</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>{&quot;author&quot;: &quot;Yamikani&quot;, &quot;version&quot;: &quot;1&quot;, &quot;name&quot;: &quot;迷你版&quot;,&quot;describe&quot;:&quot;迷你版&quot;,&quot;tom&quot;:&quot;False&quot;}</string>
+   </property>
+  </widget>
   <zorder>duty_background</zorder>
   <zorder>todayclass_background</zorder>
   <zorder>lingyun_background</zorder>
@@ -471,6 +484,7 @@ border-radius: 10px</string>
   <zorder>lingyun_Bar</zorder>
   <zorder>sd_scroll_2</zorder>
   <zorder>duty_Title</zorder>
+  <zorder>ui_info</zorder>
  </widget>
  <customwidgets>
   <customwidget>

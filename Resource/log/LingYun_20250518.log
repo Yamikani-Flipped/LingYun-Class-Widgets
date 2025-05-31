@@ -1,0 +1,4 @@
+2025-05-18 16:16:16,043 - LingYun_Logger - WARNING - 网络请求失败 ('Connection aborted.', ConnectionResetError(10054, '远程主机强迫关闭了一个现有的连接。', None, 10054, None))
+2025-05-18 17:52:52,221 - LingYun_Logger - WARNING - 网络请求失败 ('Connection aborted.', ConnectionResetError(10054, '远程主机强迫关闭了一个现有的连接。', None, 10054, None))
+2025-05-18 17:58:05,742 - LingYun_Logger - WARNING - 网络请求失败 ('Connection aborted.', ConnectionResetError(10054, '远程主机强迫关闭了一个现有的连接。', None, 10054, None))
+2025-05-18 18:02:42,980 - LingYun_Logger - WARNING - 网络请求失败 ('Connection aborted.', ConnectionResetError(10054, '远程主机强迫关闭了一个现有的连接。', None, 10054, None))
