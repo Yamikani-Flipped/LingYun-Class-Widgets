@@ -3,8 +3,9 @@
 # very small
 import sys, os, logging, winreg as reg, webbrowser, warnings, json,threading,time,glob
 from datetime import datetime,timedelta,date
-import inspect,shutil,zipfile,tempfile
+import shutil,zipfile,tempfile
 import download_ly,install_ly
+from WaveAnimation import WaveAnimation
 from Version_ly import version
 import xml.etree.ElementTree as ET
 
@@ -23,9 +24,9 @@ from qfluentwidgets import (FluentWindow,FluentIcon,SubtitleLabel,Slider,Action,
 
 # big
 from PyQt5 import uic
-from PyQt5.QtCore import pyqtProperty,  QTimer, QPropertyAnimation, QEasingCurve, Qt, QObject, pyqtSignal, pyqtSlot, QRect, QPoint, QEvent, QDate, QTime, QRectF
-from PyQt5.QtGui import QFontDatabase, QFont, QColor,QFontMetrics,QIcon,QPainter,QPainterPath,QCloseEvent,QGuiApplication,QRegion,QBrush
-from PyQt5.QtWidgets import QLabel, QWidget,QMainWindow, QScroller, QHBoxLayout, QButtonGroup, QSpacerItem,QFrame, QListWidgetItem, QMessageBox,QApplication,QVBoxLayout,QFileDialog,QFontDialog,QSystemTrayIcon,QTableWidgetItem,QColorDialog,QStackedWidget
+from PyQt5.QtCore import pyqtProperty,  QTimer, QPropertyAnimation, QEasingCurve, Qt, QObject, pyqtSignal, pyqtSlot, QRect, QPoint, QEvent, QDate, QTime, QRectF,QParallelAnimationGroup
+from PyQt5.QtGui import QFontDatabase, QFont, QColor,QFontMetrics,QIcon,QPainter,QPainterPath,QCloseEvent,QGuiApplication,QRegion,QBrush, QLinearGradient
+from PyQt5.QtWidgets import QLabel, QWidget,QMainWindow, QScroller, QHBoxLayout, QButtonGroup, QSpacerItem,QFrame, QListWidgetItem, QMessageBox,QApplication,QFileDialog,QFontDialog,QSystemTrayIcon,QTableWidgetItem,QColorDialog,QStackedWidget
 
 import ast
 from win10toast import ToastNotifier
@@ -35,7 +36,7 @@ import subprocess
 
 
 warnings.filterwarnings("ignore", category=DeprecationWarning) # 忽略警告
-Version = '1.6.0-Beta'
+Version = '1.6.2-Beta'
 Version_Parse = version(Version)
 USER_RES = str(Path(__file__).resolve().parent.parent / "Resource").replace('\\', '/') + "/"
 RES = "Resource/"
@@ -51,7 +52,7 @@ class Initialization(QObject):
     def __init__(self,parent=None):
         super(Initialization, self).__init__(parent)
     def init(self):
-        global theme_manager,theme,clock,tops,warn,DP_Comonent,Ripple,gl_weekday,cloud_sync,adj_weekday,toaster,update_channel,ncu#,yun_warn
+        global theme_manager,theme,clock,tops,warn,DP_Comonent,gl_weekday,cloud_sync,adj_weekday,toaster,update_channel,ncu#,yun_warn
         
 
         # 检测是否完成云同步变量
@@ -125,7 +126,7 @@ class Initialization(QObject):
         # 创建桌面组件
         DP_Comonent = Desktop_Component()
         warn = class_warn()
-        Ripple = RippleEffect()
+        #wave = waveEffect()
         # 连接Sender对象的自定义信号到Receiver对象的槽函数
         theme_manager.customSignal.connect(DP_Comonent.TOPIC)
     def get_datas(self):
@@ -249,11 +250,14 @@ class Initialization(QObject):
         else:
             config["duty_mode"] = "weekday"
 
-    def load_data(self):
+    def load_data(self,js=None):
         global class_all,class_ORD_Filtration, class_table, class_time, duty_table, class_dan,class_table_a,class_table_b,class_time_a,class_time_b,class_time_a,class_time_b
 
         # 从文件加载数据 json
-        class_all = self.loads_from_json(-1)
+        if js == None:
+            class_all = self.loads_from_json(-1)
+        else:
+            class_all = js
         class_ORD_Filtration = class_all[0]
         class_table_a = class_all[1]
         class_table_b = class_all[2]
@@ -384,12 +388,11 @@ class Initialization(QObject):
             yun_data_version = ast.literal_eval(j)                
             # 更新频道
             ncu = {
-                "Github_1":f"https://bgithub.xyz/Yamikani-Flipped/LingYun-Class-Widgets/releases/download/v{yun_version}/LingYun_Class_Widgets_v{yun_version}_x64.zip",
-                "Github_2":f"https://github.moeyy.xyz/https://github.com/Yamikani-Flipped/LingYun-Class-Widgets/releases/download/v{yun_version}/LingYun_Class_Widgets_v{yun_version}_x64.zip",
-                "Gitee":f"https://gitee.com/yamikani/LingYun-Class-Widgets/releases/download/v{yun_version}/LingYun_Class_Widgets_v{yun_version}_x64.zip",
+                "Github_1":f"https://bgithub.xyz/Yamikani-Flipped/LingYun-Class-Widgets/releases/download/v{yun_version.version_str}/LingYun_Class_Widgets_v{yun_version.version_str}_x64.zip",
+                "Github_2":f"https://github.moeyy.xyz/https://github.com/Yamikani-Flipped/LingYun-Class-Widgets/releases/download/v{yun_version.version_str}/LingYun_Class_Widgets_v{yun_version.version_str}_x64.zip",
+                "Gitee":f"https://gitee.com/yamikani/LingYun-Class-Widgets/releases/download/v{yun_version.version_str}/LingYun_Class_Widgets_v{yun_version.version_str}_x64.zip",
                 }
             update_channel = list(ncu.values())[int(config.get("update_ncu"))]
-            
             tys = None
 
             if Version_Parse < yun_version:  # 有新版本
@@ -460,17 +463,22 @@ class Initialization(QObject):
         tops.exitSignal.emit()
 
     def yun_json_data(self,data,flag=None):
-        global DP_Comonent, warn, Ripple#,yun_warn
+        global DP_Comonent, warn#,yun_warn
         # 云同步json数据
         j = json.dumps(data, indent=4, ensure_ascii=False)
         js = ast.literal_eval(j)
         directory = f'{USER_RES}jsons'
         if not os.path.exists(directory):
             os.makedirs(directory)
-        file_path = os.path.join(directory, "default.json")
+        file_path = os.path.join(directory, config.get("dp_widgets"))
         with open(file_path, 'w', encoding='utf-8') as f:
             json.dump(js, f, ensure_ascii=False, indent=4)
         self.load_data(js)
+        def update_dp():
+            DP_Comonent.update_Widgets()
+            DP_Comonent.update_duty()
+        QTimer.singleShot(100,update_dp)
+
         #yun_warn.warn_update("Success","云同步成功")
         #yun_warn.edit()
 
@@ -509,11 +517,13 @@ class Initialization(QObject):
         try:
             if weekday == None:
                 if adj_weekday == 0:
-                    day = datetime.now().weekday() + 1
+                    day = datetime.now().isoweekday()
                 else:
                     day = adj_weekday
             else:
                 day = int(weekday)
+
+            
             ############################
             ct = class_time[str(day)]
             ############################
@@ -860,7 +870,7 @@ class TransparentClock(QMainWindow):
         self.date_label = self.timer.findChild(QLabel, 'date_label')
 
         # 设置字体 大小 加粗 颜色 透明度
-        time_font = self.font_file(f"{RES}SFUI.ttc",config["fontname"],config["fontSize"])
+        time_font = self.font_file(f"{RES}MiSans-Bold.ttf",config["fontname"],config["fontSize"])
         date_font = self.font_file(f"{RES}MiSans-Bold.ttf",config.get('cl_date_Typeface'), config.get('cl_date_TextSize'))
 
         
@@ -905,15 +915,15 @@ class TransparentClock(QMainWindow):
     def font_file(self,file,font_name,font_size):
         # 加载字体文件datas
         if font_name == "":
-            font_id = QFontDatabase.addApplicationFont(file) # 替换为你的字体文件路径
+            font_id = QFontDatabase.addApplicationFont(file)
             if font_id != -1:
                 font_families = QFontDatabase.applicationFontFamilies(font_id)
                 if font_families:
-                    font = QFont(font_families[0], int(font_size),  QFont.Bold)  # 使用加载的字体的第一个字体族，设置大小为20
+                    font = QFont(font_families[0], int(font_size),  QFont.Bold)
                 else:
-                    font = QFont(font_name, int(font_size),  QFont.Bold)  # 如果加载失败，使用默认字体:"字体文件未包含可用字体族"
+                    font = QFont(font_name, int(font_size),  QFont.Bold)
             else:
-                font = QFont(font_name, int(font_size),  QFont.Bold)    # 如果加载失败，使用默认字体:"字体文件加载失败"
+                font = QFont(font_name, int(font_size),  QFont.Bold)
         else:
             font = QFont(font_name, int(font_size),  QFont.Bold)
         return font
@@ -947,7 +957,7 @@ class TransparentClock(QMainWindow):
     def update_settings(self,choose):
         #实时更新
         if choose == "fontSize" or choose == "fontname": 
-            font = self.font_file(f"{RES}SFUI.ttc",config['fontname'],config['fontSize'])
+            font = self.font_file(f"{RES}MiSans-Bold.ttf",config['fontname'],config['fontSize'])
             self.time_label.setFont(font)
         elif choose == "cl_UpdateTime":
             self.timer.stop()
@@ -1168,8 +1178,6 @@ class MainWindow(FluentWindow):
         self.cs.hide()
         #self.cs.clicked.connect(lambda :self.Flyout())
     def set_home(self):
-        #------设置控件开始--------hide
-
         #字体大小
         self.CW1_spinBox = self.home.findChild(SpinBox, 'CW1_spinBox')
         self.CW1_spinBox.setValue(int(config["fontSize"]))
@@ -1903,7 +1911,6 @@ class MainWindow(FluentWindow):
                 elif config.get("update_channel") == "stable":
                     self.update_channel_ComboBox.setCurrentIndex(0)
             self.update_check.setEnabled(True)
-            self.update_channel_ComboBox.currentIndexChanged.connect(self.update_channel_callback)
             self.updatesource_ComboBox.currentIndexChanged.connect(self.updatesource_callback)
 
             if tys == "update": # 有更新
@@ -1916,9 +1923,7 @@ class MainWindow(FluentWindow):
                         ws = MessageBox("警告", "下载地址获取失败，未作任何更改。可以尝试更换更新线路。你可以稍后再试或者进行反馈。", self)
                         ws.yesButton.setText("好")
                         ws.cancelButton.hide()
-                        self.update_channel_ComboBox.currentIndexChanged.disconnect(self.update_channel_callback)
                         self.update_channel_ComboBox.setCurrentIndex(0)
-                        self.update_channel_ComboBox.currentIndexChanged.connect(self.update_channel_callback)                    
                         if ws.exec():
                             self.update_check.setEnabled(True)
                     else:
@@ -1926,7 +1931,7 @@ class MainWindow(FluentWindow):
                         self.down_ElevatedCardWidget.show()
                         self.download_ok(save,None)
                         #download_ly.download_file(update_channel,save,self.download_ok,self.download_plan)
-
+            self.update_channel_ComboBox.currentIndexChanged.connect(self.update_channel_callback)
 
     def download_plan(self,bytes_downloaded, total_size, info_text):
 
@@ -4370,12 +4375,18 @@ class Desktop_Component(QWidget):
     def update_Widgets(self,cho=None):
         # 该def生成课程表并且展示（初始化时调用1次）
         global class_table,class_time,class_ORD_Filtration,adj_weekday
-        week = str(datetime.now().weekday() + 1) if adj_weekday == 0 else str(adj_weekday)
+        week = str(datetime.now().isoweekday()) if adj_weekday == 0 else str(adj_weekday)
         if cho is not None:
             a = Initialization.convert_widget(-1)
             if a == "close":
                 return
-        tom_today_widget, tom_current_widget, tom_course_widgets, tom_time_widgets, tom_guo_widgets = main.convert_widget(-1,int(week) + 1)
+        if week == "7":
+            weeks = "0"
+        else:
+            weeks = week
+        #tom_today_widget, tom_current_widget, tom_course_widgets, tom_time_widgets, tom_guo_widgets = main.convert_widget(-1,int(week) + 1)
+        tom_today_widget = main.convert_widget(-1,int(weeks)+1)[0]
+
         if self.dp_info == {} or self.dp_info["tom"] != 'True':
             if today_widget == []:
                 self.Widgets_ORD.setText("今日")
@@ -4721,25 +4732,26 @@ class class_warn(QWidget):
         
 
         tcolor = ast.literal_eval(config.get(f"dp_Countdown_color_{types}"))
+        wave = WaveAnimation()
         
         if types == "up":
             self.label.setText("下课")
-            Ripple.init(color=tcolor[0])
+            wave.start(tcolor[0])
             self.warn_background.setStyleSheet(f"background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:1, y2:0, stop:0 rgba({tcolor[1]}, {tcolor[2]}, {tcolor[3]}, 255), stop:1 rgba({tcolor[4]}, {tcolor[5]}, {tcolor[6]}, 255))")#;border-radius: 10px")
             self.finish_wav = f'{USER_RES}audio/up.wav'
         elif types == "down":
             self.label.setText("上课")
-            Ripple.init(color=tcolor[0])
+            wave.start(tcolor[0])
             self.warn_background.setStyleSheet(f"background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:1, y2:0, stop:0 rgba({tcolor[1]}, {tcolor[2]}, {tcolor[3]}, 255), stop:1 rgba({tcolor[4]}, {tcolor[5]}, {tcolor[6]}, 255))")#;border-radius: 10px")
             self.finish_wav = f'{USER_RES}audio/down.wav'
         elif types == "next_down":
             self.label.setText("即将上课")
-            Ripple.init(color=tcolor[0])
+            wave.start(tcolor[0])
             self.warn_background.setStyleSheet(f"background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:1, y2:0, stop:0 rgba({tcolor[1]}, {tcolor[2]}, {tcolor[3]}, 255), stop:1 rgba({tcolor[4]}, {tcolor[5]}, {tcolor[6]}, 255))")#;border-radius: 10px")
             self.finish_wav = f'{USER_RES}audio/next_down.wav'
         elif types == "ls":
             self.label.setText("放学")
-            Ripple.init(color=tcolor[0])
+            wave.start(tcolor[0])
             self.warn_background.setStyleSheet(f"background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:1, y2:0, stop:0 rgba({tcolor[1]}, {tcolor[2]}, {tcolor[3]}, 255), stop:1 rgba({tcolor[4]}, {tcolor[5]}, {tcolor[6]}, 255))")
             self.finish_wav = f'{USER_RES}audio/up.wav' 
 
@@ -4757,11 +4769,13 @@ class class_warn(QWidget):
 
         
         
-        self.show()
-        Ripple.show()
 
+
+        self.show()
         self.animation.start()
         self.animation_rect.start()
+
+        wave.show()
 
         thread = threading.Thread(target=self.wav, args=(config.get("dp_Sysvolume_value"), config.get("dp_Sysvolume")))
         thread.start()
@@ -4809,7 +4823,7 @@ class class_warn(QWidget):
 
         self.animations.start()
         self.animation_rects.start()
-class RippleEffect(QWidget):
+class waveEffect(QWidget):
     def init(self, color="#00FF00", duration=2200, start_delay=275):
         super().__init__()
         self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint | Qt.X11BypassWindowManagerHint | Qt.SplashScreen)
@@ -4857,9 +4871,8 @@ class RippleEffect(QWidget):
     def closeEvent(self, event):
         self.deleteLater()
         self.hide()
-        # 在动画结束后关闭窗口
-        #opacity_animation.finished.connect(ripple.close)
         event.ignore()
+
 
 # 欢迎窗口
 '''class CustomTitleBar(TitleBar):
@@ -5088,28 +5101,52 @@ def is_system_shutting_down():
 
 # 开发环境&打包环境
 def is_frozen():
-    """判断程序是否被打包（如使用 Nuitka、PyInstaller 等）"""
-    return hasattr(sys, 'frozen') or inspect.stack()[-1].filename.endswith('.exe')
+    if sys.argv[0].endswith('.exe'):
+        return True
+    else:
+        return False
 
 def restart_program():
     global tops, clock, DP_Comonent
     
+    # 停止并清理主题监听器
+    if theme_manager and theme_manager.themeListener:
+        theme_manager.themeListener.terminate()
+        theme_manager.themeListener.wait()
+        theme_manager.themeListener.deleteLater()
+        theme_manager.themeListener = None
+    
     if tops and tops.tray_icon:
         tops.tray_icon.hide()
-    
-    if is_frozen():
-        # 打包环境：使用sys.executable获取可执行文件路径
-        executable = sys.executable
-        args = [executable] + sys.argv[1:]
-    else:
-        # 开发环境：重启 Python 解释器并执行脚本
-        executable = sys.executable
-        args = [executable, sys.argv[0]] + sys.argv[1:]
-    
+
     clock.animation_hide.start()
     DP_Comonent.animation_rect_hide.start()
-    # 使用 500ms 延迟确保 Qt 有时间处理隐藏操作
-    QTimer.singleShot(500, lambda: os.execl(executable, *args))
+    
+    if is_frozen():
+        # 打包环境,executable是当前可执行文件的路径
+        executable = os.path.abspath(sys.argv[0])     
+        args = [executable] + sys.argv[1:]
+        subprocess.Popen(args, creationflags=subprocess.DETACHED_PROCESS)            
+    else:
+        # 开发环境
+        executable = sys.executable
+        script_path = os.path.abspath(sys.argv[0])
+        args = [executable, script_path] + sys.argv[1:]
+
+    def perform_restart():
+        if is_frozen():
+            # 打包环境
+            # subprocess.Popen(args, creationflags=subprocess.DETACHED_PROCESS)
+            QTimer.singleShot(100, QApplication.quit)
+        else:
+            # 开发环境
+            os.execl(executable, *args)
+    
+    # 给动画足够的时间完成
+    QTimer.singleShot(500, perform_restart)
+
+
+
 # 检查多开（暂时不用）
 def is_program_running():
     pid_file = '/tmp/LingYun.pid'
@@ -5174,22 +5211,15 @@ if __name__ == '__main__':
 
     arg = get_argument()
     if arg and arg[0] == "/update":
-        try:
-            # 0:zip路径 1:新路径 2:旧版本号 3:新版本号
-            window = install_ly.UpdateWindow([tempfile.gettempdir() + "/LingYun/Temp.zip", arg[1], arg[2], Version])
-        except Exception as e:
-            print(f"An error occurred during update: {e}")
+        # 0:zip路径 1:新路径 2:旧版本号 3:新版本号
+        window = install_ly.UpdateWindow([tempfile.gettempdir() + "/LingYun/Temp.zip", arg[1], arg[2], Version])
     else:
-        # 无论是否为/clean参数，都执行初始化流程
         main = Initialization()
         main.init()
         #sys.excepthook = main.handle_exception
         
         # 处理/clean参数
         if arg and arg[0] == "/clean":
-            try:
-                QTimer.singleShot(3000, lambda: shutil.rmtree(tempfile.gettempdir() + "/LingYun"))
-            except Exception as e:
-                print(f"Error cleaning temp directory: {e}")
+            QTimer.singleShot(3000, lambda: shutil.rmtree(tempfile.gettempdir() + "/LingYun"))
 
     sys.exit(app.exec_())
