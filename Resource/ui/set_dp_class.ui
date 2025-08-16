@@ -87,7 +87,7 @@
         <x>0</x>
         <y>0</y>
         <width>690</width>
-        <height>2926</height>
+        <height>2906</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_9">
@@ -216,12 +216,46 @@
              </layout>
             </item>
             <item>
-             <widget class="SwitchButton" name="dp_Pin_button">
-              <property name="onText">
-               <string>启用</string>
+             <widget class="ComboBox" name="dp_Pin_box">
+              <property name="minimumSize">
+               <size>
+                <width>150</width>
+                <height>0</height>
+               </size>
               </property>
-              <property name="offText">
-               <string>禁用</string>
+              <property name="styleSheet">
+               <string notr="true">ComboBox {
+    border: 1px solid rgba(0, 0, 0, 0.073);
+    border-radius: 5px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.183);
+    padding: 5px 31px 6px 11px;
+    /* font: 14px 'Segoe UI', 'Microsoft YaHei', 'PingFang SC'; */
+    color: black;
+    background-color: rgba(255, 255, 255, 0.7);
+    text-align: left;
+    outline: none;
+}
+
+ComboBox:hover {
+    background-color: rgba(249, 249, 249, 0.5);
+}
+
+ComboBox:pressed {
+    background-color: rgba(249, 249, 249, 0.3);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.073);
+    color: rgba(0, 0, 0, 0.63);
+}
+
+ComboBox:disabled {
+    color: rgba(0, 0, 0, 0.36);
+    background: rgba(249, 249, 249, 0.3);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+ComboBox[isPlaceholderText=true] {
+    color: rgba(0, 0, 0, 0.6063);
+}</string>
               </property>
              </widget>
             </item>
@@ -874,35 +908,6 @@ ComboBox[isPlaceholderText=true] {
              </widget>
             </item>
            </layout>
-          </widget>
-         </item>
-         <item>
-          <widget class="StrongBodyLabel" name="StrongBodyLabel">
-           <property name="font">
-            <font>
-             <family>微软雅黑</family>
-            </font>
-           </property>
-           <property name="text">
-            <string>单双课表互相分开互不影响，目前可以采用修改起始日期来临时切换单双周，后续进行优化！</string>
-           </property>
-           <property name="wordWrap">
-            <bool>true</bool>
-           </property>
-           <property name="lightColor" stdset="0">
-            <color>
-             <red>88</red>
-             <green>88</green>
-             <blue>88</blue>
-            </color>
-           </property>
-           <property name="darkColor" stdset="0">
-            <color>
-             <red>182</red>
-             <green>182</green>
-             <blue>182</blue>
-            </color>
-           </property>
           </widget>
          </item>
          <item>

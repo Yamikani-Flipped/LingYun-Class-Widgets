@@ -470,7 +470,8 @@
                     <item>
                      <widget class="CaptionLabel" name="CaptionLabel">
                       <property name="text">
-                       <string>在启动时自动检查更新，如果有则自动开始更新。</string>
+                       <string>在启动时自动检查更新，如果有则自动开始更新。
+*测试期间不可使用该功能。</string>
                       </property>
                      </widget>
                     </item>
@@ -478,6 +479,9 @@
                   </item>
                   <item>
                    <widget class="SwitchButton" name="autoupdate_button">
+                    <property name="enabled">
+                     <bool>false</bool>
+                    </property>
                     <property name="onText">
                      <string>开</string>
                     </property>
@@ -531,14 +535,19 @@
                     <item>
                      <widget class="CaptionLabel" name="CaptionLabel_2">
                       <property name="text">
-                       <string>一旦选择内测版后，回退需要自动回滚完才可以使用。</string>
+                       <string>一旦选择内测版后，回退需要自动回滚完才可以使用。
+*目前暂不可在此直接切换。如果需要切换版本请重新下载。</string>
                       </property>
                      </widget>
                     </item>
                    </layout>
                   </item>
                   <item>
-                   <widget class="ComboBox" name="update_channel_ComboBox"/>
+                   <widget class="ComboBox" name="update_channel_ComboBox">
+                    <property name="enabled">
+                     <bool>false</bool>
+                    </property>
+                   </widget>
                   </item>
                  </layout>
                 </widget>

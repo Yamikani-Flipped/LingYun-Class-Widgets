@@ -1,0 +1,1 @@
+2025-06-15 09:57:45,202 - LingYun_Logger - WARNING - 网络请求失败 ('Connection aborted.', ConnectionResetError(10054, '远程主机强迫关闭了一个现有的连接。', None, 10054, None))

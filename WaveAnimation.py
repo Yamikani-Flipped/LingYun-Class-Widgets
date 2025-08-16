@@ -91,7 +91,7 @@ class WaveAnimation(QWidget):
         pos_x = self.screen_geometry.width() - self._width
         
         gradient = QLinearGradient(pos_x, 0, pos_x + self._width, 0)
-        gradient.setColorAt(0, QColor(self.color.red(), self.color.green(), self.color.blue(), 0))
+        gradient.setColorAt(0, QColor(self.color.red(), self.color.green(), self.color.blue(), 200))
         gradient.setColorAt(1, self.color)
         
         wave_rect = QRectF(

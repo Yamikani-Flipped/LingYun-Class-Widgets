@@ -3,11 +3,13 @@
 # very small
 import sys, os, logging, winreg as reg, webbrowser, warnings, json,threading,time,glob
 from datetime import datetime,timedelta,date
+import traceback
 import shutil,zipfile,tempfile
-import download_ly,install_ly
+import download_ly,LNC # ,install_ly
 from WaveAnimation import WaveAnimation
 from Version_ly import version
 import xml.etree.ElementTree as ET
+from functools import partial
 
 # small (<1MB)
 import requests,simpleaudio as sa,yaml
@@ -24,26 +26,35 @@ from qfluentwidgets import (FluentWindow,FluentIcon,SubtitleLabel,Slider,Action,
 
 # big
 from PyQt5 import uic
-from PyQt5.QtCore import pyqtProperty,  QTimer, QPropertyAnimation, QEasingCurve, Qt, QObject, pyqtSignal, pyqtSlot, QRect, QPoint, QEvent, QDate, QTime, QRectF,QParallelAnimationGroup
-from PyQt5.QtGui import QFontDatabase, QFont, QColor,QFontMetrics,QIcon,QPainter,QPainterPath,QCloseEvent,QGuiApplication,QRegion,QBrush, QLinearGradient
-from PyQt5.QtWidgets import QLabel, QWidget,QMainWindow, QScroller, QHBoxLayout, QButtonGroup, QSpacerItem,QFrame, QListWidgetItem, QMessageBox,QApplication,QFileDialog,QFontDialog,QSystemTrayIcon,QTableWidgetItem,QColorDialog,QStackedWidget
+from PyQt5.QtCore import pyqtProperty,  QTimer, QPropertyAnimation, QEasingCurve, Qt, QObject, pyqtSignal, pyqtSlot, QRect, QPoint, QEvent, QDate, QTime, QRectF
+from PyQt5.QtGui import QFontDatabase, QFont, QColor,QFontMetrics,QIcon,QPainter,QPainterPath,QCloseEvent,QGuiApplication,QRegion,QBrush
+from PyQt5.QtWidgets import QLabel, QWidget,QMainWindow, QScroller, QHBoxLayout, QButtonGroup, QSpacerItem,QFrame, QListWidgetItem, QMessageBox,QApplication,QFileDialog,QFontDialog,QSystemTrayIcon,QTableWidgetItem,QColorDialog,QStackedWidget,QVBoxLayout,QSizePolicy
 
 import ast
 from win10toast import ToastNotifier
-from pathlib import Path
-from ctypes import byref, windll, c_ulong, c_bool, POINTER
+#from pathlib import Path
+from ctypes import byref, windll, c_ulong, c_bool, POINTER ,wintypes,create_unicode_buffer
 import subprocess
 
 
 warnings.filterwarnings("ignore", category=DeprecationWarning) # 忽略警告
-Version = '1.6.2-Beta'
+Version = '1.6.6-Beta'
 Version_Parse = version(Version)
-USER_RES = str(Path(__file__).resolve().parent.parent / "Resource").replace('\\', '/') + "/"
+# 1.6.6以上版本修改为配置文件存电脑文档文件夹中
+#USER_RES = str(Path(__file__).resolve().parent.parent / "Resource").replace('\\', '/') + "/"
+def getDocPath(pathID=5):
+    '''path=5: My Documents'''
+    buf= create_unicode_buffer(wintypes.MAX_PATH)
+    windll.shell32.SHGetFolderPathW(None, pathID, None, 0, buf)
+    return buf.value
+USER_RES = getDocPath() + "/LingYun_Profile/"
 RES = "Resource/"
+
 # 获取当前完整路径,获取当前文件名（os.path.basename(sys.argv[0]获得的是exe名字）
 script_dir = sys.argv[0].replace(os.path.basename(sys.argv[0]),"")
 script_full_path = sys.argv[0]
-os.chdir(script_dir)# 切换工作目录
+os.chdir(script_dir)# 切换工作目录QPropertyAnimation
+
 
 
 # 初始化程序整体
@@ -54,12 +65,8 @@ class Initialization(QObject):
     def init(self):
         global theme_manager,theme,clock,tops,warn,DP_Comonent,gl_weekday,cloud_sync,adj_weekday,toaster,update_channel,ncu#,yun_warn
         
-
         # 检测是否完成云同步变量
         cloud_sync = False
-
-        # 通知
-        #toaster = ToastNotifier()
 
         # 调课的星期
         adj_weekday = 0
@@ -68,12 +75,10 @@ class Initialization(QObject):
         # 更新频道
         update_channel = None
         ncu = {}
+        self.in_update = False
         
-
         # 初始化数据
         self.get_datas()
-
-
 
         # 初始化日志记录器
         #if config.get("print_log") == "True":
@@ -87,12 +92,10 @@ class Initialization(QObject):
         #yun_warn = Yun_warn()
         #yun_warn.warn_update("Wait","云端获取数据中...")
 
-
         # 初始化主题管理器
         theme_manager = ThemeManager()
         theme_manager.toggleTheme(Theme.AUTO)
         theme = "dark" if isDarkTheme() else "light"
-
 
         # 云同步
         if config.get("yun_Switch") == "True":
@@ -102,8 +105,6 @@ class Initialization(QObject):
         clock = TransparentClock()
         #clock.resize(int(datas['width']), int(datas['height']))  # 设置窗口大小
         clock.move(int(config['x']), int(config['y']))  # 设置窗口位置
-
-
 
         # 显示时钟和桌面组件
         if config.get("cl_Switch") == "True":
@@ -126,8 +127,7 @@ class Initialization(QObject):
         # 创建桌面组件
         DP_Comonent = Desktop_Component()
         warn = class_warn()
-        #wave = waveEffect()
-        # 连接Sender对象的自定义信号到Receiver对象的槽函数
+
         theme_manager.customSignal.connect(DP_Comonent.TOPIC)
     def get_datas(self):
         global lists,config,class_weekday,gl_weekday,class_dan,up_work,default_class,default_config,duty_again
@@ -144,7 +144,7 @@ class Initialization(QObject):
         
         #新数据格式  “dp”为桌面组件的数据，“set”为设置数据，clock为时钟数据
         default_config = {'dp_Switch': 'True', #是否开启桌面组件
-                  'dp_Pin' : 'False', #是否置顶
+                  'dp_Pin' : 'False', #是否置顶 True,False,Under
                   'dp_Typeface' : '', #字体
                   'dp_Bell' : 'True', #是否开启上下课提醒
                   'dp_Sysvolume' : 'True', #是否修改系统音量
@@ -177,6 +177,11 @@ class Initialization(QObject):
                   'dp_countdown_action' : '0', # 双击倒计时的操作
                   'dp_todayclass_action' : '2', # 双击今日课程的操作
                   'dp_duty_action' : '1', # 双击值日生的操作 
+                  'dp_display_count' : 'True', #是否显示全屏倒计时
+                  'dp_count' : '10', # 下课倒计时时间
+                  'dp_count_font' : '', # 倒计时字体
+
+
                   # 0.无操作，1.值日生编辑，2.课程表编辑，3.时间编辑
 
 
@@ -349,19 +354,20 @@ class Initialization(QObject):
 
     def yun_check_verison(self,data=None,flag=None,ty=None):
         global yun_version,yun_data_version,update_channel,ncu
-
+        if self.in_update == True:
+            return
         if flag == None: # 第一次请求
             url = "https://lingyun-6e2.pages.dev/config_public.json"
             self.fetch_data(url, self.yun_check_verison,1,self.yun_check_verison)
             return 
-        elif flag == 1: # 第二次请求
-            url = "https://github.moeyy.xyz/https://github.com/Yamikani-Flipped/LingYun-Class-Widgets/blob/main/config_public.json"
-            self.fetch_data(url, self.yun_check_verison,2,self.yun_check_verison)
-            return
-        elif flag == 2: # 第3次请求
+        elif flag == 1: # 第2次请求
             url = "https://raw.bgithub.xyz/Yamikani-Flipped/LingYun-Class-Widgets/main/config_public.json"
             self.fetch_data(url, self.yun_check_verison,3,self.yun_check_verison)
-            return
+            return        
+        #elif flag == 2: # 第二次请求 失效
+        #    url = "https://github.moeyy.xyz/https://github.com/Yamikani-Flipped/LingYun-Class-Widgets/blob/main/config_public.json"
+        #    self.fetch_data(url, self.yun_check_verison,2,self.yun_check_verison)
+        #    return
         elif flag == 3: # 第4次请求
             url = "https://gitee.com/yamikani/LingYun-Class-Widgets/raw/main/config_public.json"
             self.fetch_data(url, self.yun_check_verison,4,self.yun_check_verison)
@@ -377,7 +383,8 @@ class Initialization(QObject):
             # 云版本号
             data = data.json()
             j = json.dumps(data, indent=4, ensure_ascii=False)
-            if config.get("update_channel") == "beta":
+            #if config.get("update_channel") == "beta":
+            if Version_Parse.prerelease:  # 如果是测试版
                 if ast.literal_eval(j)['beta_version'] == "None":
                     yun_version = version(ast.literal_eval(j)['version'])
                 else:
@@ -388,20 +395,21 @@ class Initialization(QObject):
             yun_data_version = ast.literal_eval(j)                
             # 更新频道
             ncu = {
-                "Github_1":f"https://bgithub.xyz/Yamikani-Flipped/LingYun-Class-Widgets/releases/download/v{yun_version.version_str}/LingYun_Class_Widgets_v{yun_version.version_str}_x64.zip",
-                "Github_2":f"https://github.moeyy.xyz/https://github.com/Yamikani-Flipped/LingYun-Class-Widgets/releases/download/v{yun_version.version_str}/LingYun_Class_Widgets_v{yun_version.version_str}_x64.zip",
-                "Gitee":f"https://gitee.com/yamikani/LingYun-Class-Widgets/releases/download/v{yun_version.version_str}/LingYun_Class_Widgets_v{yun_version.version_str}_x64.zip",
+                "Github_1":f"https://bgithub.xyz/Yamikani-Flipped/LingYun-Class-Widgets/releases/download/v{yun_version.version_str}/LingYun_Class_Widgets_v{yun_version.version_str}_Install_x64.exe",
+                "Github_2":f"https://github.moeyy.xyz/https://github.com/Yamikani-Flipped/LingYun-Class-Widgets/releases/download/v{yun_version.version_str}/LingYun_Class_Widgets_v{yun_version.version_str}_Install_x64.exe",
+                "Gitee":f"https://gitee.com/yamikani/LingYun-Class-Widgets/releases/download/v{yun_version.version_str}/LingYun_Class_Widgets_v{yun_version.version_str}_Install_x64.exe",
                 }
             update_channel = list(ncu.values())[int(config.get("update_ncu"))]
             tys = None
-
             if Version_Parse < yun_version:  # 有新版本
                 # 自动更新 (待完善，链接需要灵活，设置可改)
                 tys = "update"
+                config["auto_update"] = "False" 
                 if config.get("auto_update") == "True":
                     if config.get("check_update") == "True" and ty == None:
                         self.to_message('凌云班级组件正在更新中','下载完成后稍后会自动重启进行安装。')
                         save = tempfile.gettempdir() + "/LingYun/Temp.zip"
+
                         download_ly.download_file(update_channel,save,main.download_ok)
                 else:
                     if config.get("check_update") == "True":
@@ -430,9 +438,14 @@ class Initialization(QObject):
     def download_ok(self,path,error):
         if path:
             self.logger.info(f"自动更新下载新版本成功: {path}")
-            self.update_event = threading.Event()
-            update_thread = threading.Thread(target=self.zip_update)
-            update_thread.start()
+            self.in_update = False
+            temp = tempfile.gettempdir()
+            save = temp + "/LingYun/"
+            subprocess.Popen([os.path.join(save, "temp.exe")] + ["/passive"])
+            tops.exitSignal.emit()
+            #self.update_event = threading.Event()
+            #update_thread = threading.Thread(target=self.zip_update)
+            #update_thread.start()
         else:
             self.logger.warning(f"自动更新下载新版本时出现错误: {error}")
 
@@ -787,17 +800,32 @@ class Initialization(QObject):
             # 返回None
             return False
 
-    def handle_exception(self,exc_type, exc_value, exc_traceback):
-        # 捕获到异常时运行的代码
-        #logging.error("Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback))
-        main.logger.error(f"Uncaught exception: {exc_type}\n{exc_value}\n{exc_traceback}")
+    def handle_exception(self, exc_type, exc_value, exc_traceback):
+        # 获取完整的堆栈跟踪信息
+        traceback_details = "".join(traceback.format_exception(exc_type, exc_value, exc_traceback))
+        
+        # 记录详细错误信息到日志
+        main.logger.error("Uncaught exception:\n" + traceback_details)
+        
+        # 关闭相关资源
         theme_manager.themeListener.terminate()
         theme_manager.themeListener.deleteLater()
-
-        w = Dialog("运行出现致命错误", f"错误的详细信息为下，目前无法继续运行，请反馈给开发者。敬请谅解！\n错误日志保存在软件目录Resource下的log文件夹中。 \n {exc_value}", None)
+        
+        # 构建包含行号信息的错误消息
+        error_msg = (
+            f"错误的详细信息为下，目前无法继续运行，请反馈给开发者。敬请谅解！\n\n"
+            f"错误类型: {exc_type.__name__}\n"
+            f"错误信息: {str(exc_value)}\n\n"
+            "错误日志保存在软件目录Resource下的log文件夹中。"
+        )
+        
+        # 使用现有Dialog类创建对话框
+        w = Dialog("运行出现错误", error_msg, None)
         w.yesButton.setText("好")
         w.cancelButton.hide()
         w.buttonLayout.insertStretch(1)
+        
+        # 显示对话框
         if w.exec():
             pass
     # 检测系统深色模式（注册表方法，目前没用）
@@ -845,7 +873,7 @@ class Initialization(QObject):
 
 # 时钟类
 class TransparentClock(QMainWindow):
-    def __init__(self):#, da tas):
+    def __init__(self):
         global week_day_dict,config
         super().__init__()
 
@@ -872,7 +900,9 @@ class TransparentClock(QMainWindow):
         # 设置字体 大小 加粗 颜色 透明度
         time_font = self.font_file(f"{RES}MiSans-Bold.ttf",config["fontname"],config["fontSize"])
         date_font = self.font_file(f"{RES}MiSans-Bold.ttf",config.get('cl_date_Typeface'), config.get('cl_date_TextSize'))
-
+        
+        #time_font.setStyleHint(QFont.Monospace)
+        #time_font.setFixedPitch(True)
         
         self.time_label.setFont(time_font)
         self.date_label.setFont(date_font)
@@ -911,6 +941,12 @@ class TransparentClock(QMainWindow):
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_time)
         self.timer.start(int(config.get('cl_UpdateTime')))
+
+        # 保持日期居中
+        self.resize(QFontMetrics(self.time_label.font()).horizontalAdvance(self.time_label.text()), self.height())
+        self.mediate_date = QTimer(self)
+        self.mediate_date.timeout.connect(self.date_mediate)
+        self.mediate_date.start(60000)
     
     def font_file(self,file,font_name,font_size):
         # 加载字体文件datas
@@ -932,10 +968,19 @@ class TransparentClock(QMainWindow):
         global gl_weekday
         if gl_weekday != str(datetime.now().weekday() + 1):
             restart_program()
-        
         now = datetime.now()
+        formatted_date = self.api_formatted_date()        
         self.time_label.setText(now.strftime('%H:%M:%S' if config.get("cl_time_Second") == "True" else '%H:%M'))
+        self.date_label.setText(formatted_date)
 
+    def date_mediate(self):
+        # 保持日期居中
+        if config.get("cl_date_mediate") == "True" and config.get('cl_time_Switch') == "True":
+            self.resize(QFontMetrics(self.time_label.font()).horizontalAdvance(self.time_label.text()), self.height())
+
+
+    def api_formatted_date(self) -> str:
+        now = datetime.now()
         if config.get("cl_date_language") == "zh-cn":
             # 格式化日期
             m = now.strftime('%m').lstrip('0')
@@ -946,13 +991,8 @@ class TransparentClock(QMainWindow):
                 formatted_date = formatted_date.replace(eng, ch)
         elif config.get("cl_date_language") == "en-us":
             formatted_date = now.strftime('%B %d %A')
+        return formatted_date
 
-
-        self.date_label.setText(formatted_date)
-
-        # 保持日期居中
-        if config.get("cl_date_mediate") == "True" and config.get('cl_time_Switch') == "True":
-            self.resize(QFontMetrics(self.time_label.font()).horizontalAdvance(self.time_label.text()), self.height())
 
     def update_settings(self,choose):
         #实时更新
@@ -1316,12 +1356,15 @@ class MainWindow(FluentWindow):
             self.dp_Switch_button.setChecked(False)
         self.dp_Switch_button.checkedChanged.connect(lambda value: self.update_dp(value,'dp_Switch'))
         
-        self.dp_Pin_button = self.dp_class.findChild(SwitchButton, 'dp_Pin_button')
+        self.dp_Pin_box = self.dp_class.findChild(ComboBox, 'dp_Pin_box')
+        self.dp_Pin_box.addItems(["置顶","正常","置于底层(会禁用收起)"])# True,False,Under
         if config.get('dp_Pin') == "True":
-            self.dp_Pin_button.setChecked(True)
-        else:
-            self.dp_Pin_button.setChecked(False)
-        self.dp_Pin_button.checkedChanged.connect(lambda value: self.update_dp(value,'dp_Pin'))
+            self.dp_Pin_box.setCurrentIndex(0)
+        elif config.get('dp_Pin') == "False":
+            self.dp_Pin_box.setCurrentIndex(1)
+        elif config.get('dp_Pin') == "Under":
+            self.dp_Pin_box.setCurrentIndex(2)
+        self.dp_Pin_box.currentIndexChanged.connect(lambda value: self.update_dp(value,'dp_Pin'))
 
         self.dp_Typeface_button = self.dp_class.findChild(PushButton, 'dp_Typeface_button')
         self.dp_Typeface_button.clicked.connect(self.choose_font_dp)
@@ -1590,6 +1633,7 @@ class MainWindow(FluentWindow):
 
         # 自动更新
         self.autoupdate_button = self.info.findChild(SwitchButton, 'autoupdate_button')
+        config["auto_update"] = "False"
         if config.get("auto_update") == "True":
             self.autoupdate_button.setChecked(True)
         else:
@@ -1600,36 +1644,40 @@ class MainWindow(FluentWindow):
         self.update_channel_ComboBox = self.info.findChild(ComboBox, 'update_channel_ComboBox')
         self.warning_SubtitleLabel = self.info.findChild(StrongBodyLabel, 'warning_SubtitleLabel')
         self.warning_SubtitleLabel.hide()
-        upc = []
-        if yun_version == "获取失败":
-            s = "正式版" if config.get("update_channel") == "beta" else "测试版(beta)"
-            upc = [f"{s}(请先检查更新)"]
-            self.update_channel_ComboBox.addItems(upc)
-        else:
-            upc = ["正式版"]
-            if yun_data_version["beta_version"] != "None":
-                upc.append("测试版(Beta)")
-            else:
-                if config.get("update_channel") == "beta":
-                    upc.append("测试版(Beta)(目前没有测试版本)")
-                    self.warning_SubtitleLabel.setText("警告：目前官方没有测试版本，建议及时退出测试版以转回正式版，在测试版中可能存在未知的问题。")
-                    self.warning_SubtitleLabel.show()
 
-
-            self.update_channel_ComboBox.addItems(upc)
-            if config.get("update_channel") == "beta":
-                self.update_channel_ComboBox.setCurrentIndex(1)
-            elif config.get("update_channel") == "stable":
-                self.update_channel_ComboBox.setCurrentIndex(0)
+        s = "正式版" if Version_Parse.is_prerelease == False else "测试版(beta)"
+        self.update_channel_ComboBox.addItem(s)
+        #upc = []
+        #if yun_version == "获取失败":
+        #    s = "正式版" if config.get("update_channel") == "beta" else "测试版(beta)"
+        #    upc = [f"{s}(请先检查更新)"]
+        #    self.update_channel_ComboBox.addItems(upc)
+        #else:
+        #    upc = ["正式版"]
+        #    if yun_data_version["beta_version"] != "None":
+        #        upc.append("测试版(Beta)")
+        #    else:
+        #        if config.get("update_channel") == "beta":
+        #            upc.append("测试版(Beta)(目前没有测试版本)")
+        #            self.warning_SubtitleLabel.setText("警告：目前官方没有测试版本，建议及时退出测试版以转回正式版，在测试版中可能存在未知的问题。")
+        #            self.warning_SubtitleLabel.show()
+        #
+        #
+        #    self.update_channel_ComboBox.addItems(upc)
+        #    if config.get("update_channel") == "beta":
+        #        self.update_channel_ComboBox.setCurrentIndex(1)
+        #    elif config.get("update_channel") == "stable":
+        #        self.update_channel_ComboBox.setCurrentIndex(0)
         self.update_channel_callback = lambda value: self.update_dp(value, 'update_channel_w')    
-        self.update_channel_ComboBox.currentIndexChanged.connect(self.update_channel_callback)
+
+
 
         # 检查更新
         self.horizontalLayout_update = self.info.findChild(QHBoxLayout, 'horizontalLayout_update')
         self.update_check = PrimaryPushButton(text="检查更新",parent=self.info,icon=FluentIcon.SYNC)
         self.update_check.setMaximumWidth(150)
         self.horizontalLayout_update.addWidget(self.update_check)
-        self.update_check.clicked.connect(self.check_update)
+
 
 
         # 下载进度
@@ -1651,12 +1699,14 @@ class MainWindow(FluentWindow):
             self.updatesource_ComboBox.addItems(ncu.keys())
             self.updatesource_ComboBox.setCurrentIndex(int(config.get("update_ncu")))
         self.updatesource_callback = lambda value: self.update_dp(value, 'update_ncu')  
-        self.updatesource_ComboBox.currentIndexChanged.connect(self.updatesource_callback)
 
 
+        def current_connect():
+            self.update_check.clicked.connect(self.check_update)
+            #self.update_channel_ComboBox.currentIndexChanged.connect(self.update_channel_callback)            
+            self.updatesource_ComboBox.currentIndexChanged.connect(self.updatesource_callback)
+        QTimer.singleShot(500, current_connect)  # 延时1秒执行，确保界面加载完成
 
-
-        #self.thank_button = self.info.findChild(PushButton, 'thank_button')
     def set_classes(self):
         #------设置课表页面的控件--------
         self.TableWidget = self.classes.findChild(TableWidget, 'TableWidget')
@@ -1803,21 +1853,23 @@ class MainWindow(FluentWindow):
         self.week_box.setCurrentIndex(datetime.now().weekday())        
         self.week_box.currentIndexChanged.connect(self.duty_week_changed)
 
-        def yc():
+        QTimer.singleShot(100, self.yc)  # 延时执行，确保界面加载完成    
+
+    def yc(self):
             self.duty_Widget.clear()
-            self.name_Button.clicked.connect(lambda: self.update_duty('name'))
-            self.project_Button.clicked.connect(lambda: self.update_duty('project'))
-            self.Add_Button.clicked.connect(lambda: self.update_duty('add_item'))
-            self.Del_Button.clicked.connect(lambda: self.update_duty('del_item'))
+            self.name_Button.clicked.connect(partial(self.update_duty,'name'))
+            self.project_Button.clicked.connect(partial(self.update_duty,'project'))
+            self.Add_Button.clicked.connect(partial(self.update_duty,'add_item'))
+            self.Del_Button.clicked.connect(partial(self.update_duty,'del_item'))
             if config.get("duty_mode") == "again":
                 date = duty_table.get("date_begin")
                 self.again_ZhDatePicker.setDate(QDate(int(date[:4]), int(date[4:6]), int(date[6:])))
                 self.again_ZhDatePicker.dateChanged.connect(lambda date: self.update_duty('again_ZhDatePicker'))
                 self.again_box.addItems(list((duty_table.get("duty")).keys()))
                 group_key, duty_groups = self.duty_again_group()
-                QTimer.singleShot(100, lambda: self.duty_week_changed(int(group_key)-1))
+                QTimer.singleShot(100, partial(self.duty_week_changed,int(group_key)-1))
                 self.again_box.setCurrentIndex(int(group_key) - 1)
-                self.duty_Widget.itemSelectionChanged.connect(lambda: self.update_duty("again_duty_widget"))                
+                self.duty_Widget.itemSelectionChanged.connect(partial(self.update_duty,"again_duty_widget"))                
                 # 禁用星期法组件
                 self.name_Button.setDisabled(True)
                 self.project_Button.setDisabled(True)
@@ -1829,8 +1881,8 @@ class MainWindow(FluentWindow):
 
 
             elif config.get("duty_mode") == "weekday":
-                self.duty_Widget.itemSelectionChanged.connect(lambda: self.update_duty("duty_widget"))
-                QTimer.singleShot(100, lambda: self.duty_week_changed(datetime.now().weekday()))
+                self.duty_Widget.itemSelectionChanged.connect(partial(self.update_duty,"duty_widget"))
+                QTimer.singleShot(100, partial(self.duty_week_changed,datetime.now().weekday()))
                 # 禁用轮回法组件
                 self.again_ZhDatePicker.setDisabled(True)
                 self.again_box.setDisabled(True)
@@ -1842,13 +1894,11 @@ class MainWindow(FluentWindow):
                 self.again_Add_Button.setDisabled(True)
                 self.again_Del_Button.setDisabled(True)
             self.again_box.currentIndexChanged.connect(self.duty_week_changed) 
-            self.again_new_PrimaryPushButton.clicked.connect(lambda: self.update_duty('again_new'))
-            self.again_project_Button.clicked.connect(lambda: self.update_duty('again_project'))    
-            self.again_name_Button.clicked.connect(lambda: self.update_duty('again_name'))
-            self.again_Add_Button.clicked.connect(lambda: self.update_duty('again_add_item'))
-            self.again_Del_Button.clicked.connect(lambda: self.update_duty('again_del_item'))
-        
-        QTimer.singleShot(100, yc)  # 延时执行，确保界面加载完成       
+            self.again_new_PrimaryPushButton.clicked.connect(partial(self.update_duty, 'again_new'))
+            self.again_project_Button.clicked.connect(partial(self.update_duty, 'again_project'))    
+            self.again_name_Button.clicked.connect(partial(self.update_duty, 'again_name'))
+            self.again_Add_Button.clicked.connect(partial(self.update_duty, 'again_add_item'))
+            self.again_Del_Button.clicked.connect(partial(self.update_duty, 'again_del_item'))
 
     def set_display(self):
         self.dp_xiping_button = self.display.findChild(SwitchButton, 'dp_xiping_button')
@@ -1857,12 +1907,28 @@ class MainWindow(FluentWindow):
         else:
             self.dp_xiping_button.setChecked(False)
         self.dp_xiping_button.checkedChanged.connect(lambda value: self.update_dp(value,'dp_xiping'))
+
+        self.dp_display_count_button = self.display.findChild(SwitchButton, 'dp_display_count_button')
+        if config.get('dp_display_count') == "True":
+            self.dp_display_count_button.setChecked(True)
+        else:
+            self.dp_display_count_button.setChecked(False)
+        self.dp_display_count_button.checkedChanged.connect(lambda value: self.update_dp(value,'dp_display_count'))
+        
+        self.dp_count_SpinBox = self.display.findChild(SpinBox, 'dp_count_SpinBox')
+        self.dp_count_SpinBox.setValue(int(config.get('dp_count')))
+        self.dp_count_SpinBox.valueChanged.connect(lambda value: self.update_dp(value,'dp_count'))
+
+        self.count_font_PushButton = self.display.findChild(PushButton, 'count_font_PushButton')
+        self.count_font_PushButton.clicked.connect(self.count_font)
+
     def set_Adjustment(self):
         #------调课管理--------
         self.adj_Combobox = self.adjustment.findChild(ComboBox, 'adj_ComboBox')
         self.adj_Combobox.addItems(["默认","星期一","星期二","星期三","星期四","星期五","星期六","星期日"])
         #self.adj_Combobox.setPlaceholderText("请选择调整的星期")# 设置提示文本
         self.adj_Combobox.currentIndexChanged.connect(self.adj_week_changed)
+
 
     @pyqtSlot(str, str, str)
     def update_ui_with_check_result(self, current_cloud_version, check_type, update_status):
@@ -1872,9 +1938,9 @@ class MainWindow(FluentWindow):
             self.update_check.setDisabled(True)
             self.yun_version.setText(f'正在检查新版本...')
             main.yun_check_verison()
-            self.update_channel_ComboBox.currentIndexChanged.disconnect(self.update_channel_callback)
-            self.update_channel_ComboBox.clear()
-            self.update_channel_ComboBox.addItems(["正在检查新版本"])
+            #self.update_channel_ComboBox.currentIndexChanged.disconnect(self.update_channel_callback)
+            #self.update_channel_ComboBox.clear()
+            #self.update_channel_ComboBox.addItems(["正在检查新版本"])
             self.updatesource_ComboBox.currentIndexChanged.disconnect(self.updatesource_callback)
             self.updatesource_ComboBox.clear()
             self.updatesource_ComboBox.addItems(["正在检查新版本"])
@@ -1884,10 +1950,12 @@ class MainWindow(FluentWindow):
             self.yun_version.setText(f"最新版本：{data}")
             upc = []
             if yun_version == "获取失败":
-                s = "正式版" if config.get("update_channel") == "beta" else "测试版(beta)"
+
+                #s = "正式版" if config.get("update_channel") == "beta" else "测试版(beta)"
+                s = "正式版" if Version_Parse.is_prerelease == False else "测试版(beta)"
                 upc = [f"{s}(请先检查网络)"]
-                self.update_channel_ComboBox.clear()
-                self.update_channel_ComboBox.addItems(upc)
+                #self.update_channel_ComboBox.clear()
+                #self.update_channel_ComboBox.addItems(upc)
                 self.updatesource_ComboBox.clear()
                 self.updatesource_ComboBox.addItems(["请先检查网络"])
 
@@ -1901,15 +1969,15 @@ class MainWindow(FluentWindow):
                         upc.append("测试版(Beta)(目前没有测试版本)")
                         self.warning_SubtitleLabel.show()
 
-                self.update_channel_ComboBox.clear()
-                self.update_channel_ComboBox.addItems(upc)
+                #self.update_channel_ComboBox.clear()
+                #self.update_channel_ComboBox.addItems(upc)
                 self.updatesource_ComboBox.clear()
                 self.updatesource_ComboBox.addItems(ncu.keys())
 
-                if config.get("update_channel") == "beta":
-                    self.update_channel_ComboBox.setCurrentIndex(1)
-                elif config.get("update_channel") == "stable":
-                    self.update_channel_ComboBox.setCurrentIndex(0)
+                #if config.get("update_channel") == "beta":
+                #    self.update_channel_ComboBox.setCurrentIndex(1)
+                #elif config.get("update_channel") == "stable":
+                #    self.update_channel_ComboBox.setCurrentIndex(0)
             self.update_check.setEnabled(True)
             self.updatesource_ComboBox.currentIndexChanged.connect(self.updatesource_callback)
 
@@ -1923,15 +1991,15 @@ class MainWindow(FluentWindow):
                         ws = MessageBox("警告", "下载地址获取失败，未作任何更改。可以尝试更换更新线路。你可以稍后再试或者进行反馈。", self)
                         ws.yesButton.setText("好")
                         ws.cancelButton.hide()
-                        self.update_channel_ComboBox.setCurrentIndex(0)
+                        #self.update_channel_ComboBox.setCurrentIndex(0)
                         if ws.exec():
                             self.update_check.setEnabled(True)
                     else:
-                        save = tempfile.gettempdir() + "/LingYun/Temp.zip"
+                        save = tempfile.gettempdir() + "/LingYun/Temp.exe"
                         self.down_ElevatedCardWidget.show()
-                        self.download_ok(save,None)
-                        #download_ly.download_file(update_channel,save,self.download_ok,self.download_plan)
-            self.update_channel_ComboBox.currentIndexChanged.connect(self.update_channel_callback)
+                        #self.download_ok(save,None)
+                        download_ly.download_file(update_channel,save,self.download_ok,self.download_plan)
+            #self.update_channel_ComboBox.currentIndexChanged.connect(self.update_channel_callback)
 
     def download_plan(self,bytes_downloaded, total_size, info_text):
 
@@ -1949,8 +2017,9 @@ class MainWindow(FluentWindow):
 
     def download_ok(self,path,error):
         if error == None:
+            self.in_update = False
             self.down_ProgressBar.setValue(int(100))
-            self.info_Label.setText(f"下载完成，正在解压中，即将自动重启软件以继续安装")
+            self.info_Label.setText(f"下载完成，即将自动启动更新程序软件以继续安装")
             self.percent_Label.setText(f"100%")
             main.download_ok(path,None)
         else:
@@ -1960,8 +2029,6 @@ class MainWindow(FluentWindow):
             self.info_Label.setText(f"下载失败，错误信息为：\n{error}")
             self.percent_Label.setText(f"--%")
             main.download_ok(None,error)
-
-
 
     def adj_week_changed(self, index):
         global adj_weekday,DP_Comonent
@@ -1973,9 +2040,7 @@ class MainWindow(FluentWindow):
         DP_Comonent.update_duty()
     def SD_changed(self,value):
         global class_table_a, class_table_b, class_time_a, class_time_b
-        self.TableWidget.itemChanged.disconnect(self.table_update)
-        lists["widgets_on"] = True
-        self.TableWidget.clear()
+
         if value == 0: # 单周
             done, ls = self.convert_table(class_table_a)
             self.widget_time = self.convert_time(class_time_a)
@@ -1983,8 +2048,12 @@ class MainWindow(FluentWindow):
             done, ls = self.convert_table(class_table_b)
 
             self.widget_time = self.convert_time(class_time_b)
-        
+
+        lists["widgets_on"] = True            
+        self.TableWidget.itemChanged.disconnect(self.table_update)  
+        self.TableWidget.clear()        
         self.TableWidget.setWordWrap(False)
+
         # 设置表格的行数和列数
         self.TableWidget.setRowCount(ls)
         self.TableWidget.setColumnCount(8)
@@ -2167,6 +2236,7 @@ class MainWindow(FluentWindow):
         if choose.startswith("again"):
             action = choose[6:]  # 提取操作类型（如"del_item"）
 
+
             # 获取当前组号（基于日期计算）
             date_begin_str = duty_table["date_begin"]
             date_begin = datetime.strptime(date_begin_str, "%Y%m%d").date()
@@ -2185,7 +2255,11 @@ class MainWindow(FluentWindow):
             num_groups = len(duty_groups)
             current_group = (workdays % num_groups) + 1
             group_key = str(current_group)
-            
+
+            if current_group != int(self.again_box.currentText()):
+                current_group = int(self.again_box.currentText())
+                group_key = str(current_group)
+
             if action == "duty_widget":
                 if self.duty_Widget.currentItem() == None:
                     self.again_name_Edit.clear()
@@ -2257,11 +2331,16 @@ class MainWindow(FluentWindow):
                 group = int(list(duty_groups.keys())[-1]) + 1
                 new_group_data = {key: [] for key in duty_groups[str(group-1)]}
                 duty_groups[str(group)] = new_group_data
-                self.again_box.currentIndexChanged.disconnect(self.duty_week_changed) 
+                try:
+                    self.again_box.currentIndexChanged.disconnect(self.duty_week_changed)
+                except TypeError:
+                    # 如果未连接，会抛出 TypeError，直接忽略
+                    pass
                 self.again_box.clear()
                 self.again_box.addItems(list(duty_groups.keys()))
                 self.again_box.currentIndexChanged.connect(self.duty_week_changed) 
-                QTimer.singleShot(100, lambda: self.again_box.setCurrentIndex(int(group)-1))
+                self.again_box.setCurrentIndex(int(group)-1)
+                #QTimer.singleShot(100, lambda: )
             elif action == "ZhDatePicker":
                 duty_table["date_begin"] = self.again_ZhDatePicker.date.toString("yyyyMMdd")
             # 更新桌面组件显示
@@ -2513,6 +2592,10 @@ class MainWindow(FluentWindow):
         if ok:
             self.update_dp(font.family(),'dp_Typeface')
             config['dp_Typeface'] = font.family()
+    def count_font(self):
+        font, ok = QFontDialog.getFont(self)
+        if ok:
+            self.update_dp(font.family(),'dp_count_font')
     def choose_color_dp(self ,types):
         color = QColorDialog.getColor()
         if color.isValid():
@@ -2535,13 +2618,14 @@ class MainWindow(FluentWindow):
         if choose == "dp_widgets":
             DP_Comonent.lingyun_down.setText("--:--")
             value = self.json_widgets[value] + ".json"
-            
-            ###########通知主程序更新组件
-
-            #Initialization().load_data()
-            #DP_Comonent.alert()
-            #DP_Comonent.update_Widgets()
-            #DP_Comonent.update_duty()
+        
+        if choose == "dp_Pin":
+            if value == 0:
+                value = "True"
+            elif value == 1:
+                value = "False"
+            elif value == 2:
+                value = "Under"
 
         if choose == "dp_duty_TimePicker_from":
             value = f"{value.hour()}:{value.minute()}"
@@ -2603,7 +2687,7 @@ class MainWindow(FluentWindow):
         return_choices = {
             "dp_Curriculum_ramp_action", "dp_countdown_action", "dp_todayclass_action", "dp_duty_action",
             "check_update", "print_log", "check_net", "dp_xiping", "auto_update","update_channel",
-            "update_ncu"
+            "update_ncu","dp_count","dp_display_count","dp_count_font"
         }
         if choose in return_choices:
             return
@@ -2612,6 +2696,7 @@ class MainWindow(FluentWindow):
 
     def update_channel(self,value):
         global update_channel
+        return
         if value == "stable":
             w = MessageBox("提示", "你目前在Beta版，是否确定需要回到正式版？", self)
             w.yesButton.setText("确定回去")
@@ -3084,6 +3169,7 @@ class MainWindow(FluentWindow):
             w.cancelButton.hide()
             w.buttonLayout.insertStretch(1)
             if w.exec():
+                self.close()
                 restart_program()
                 #theme_manager.themeListener.terminate()
                 #theme_manager.themeListener.deleteLater()
@@ -3100,6 +3186,7 @@ class MainWindow(FluentWindow):
                 w.yesButton.setText("重启软件")
                 w.cancelButton.setText("忽略")
                 if w.exec():
+                    self.close()
                     restart_program()
                     #theme_manager.themeListener.terminate()
                     #theme_manager.themeListener.deleteLater()
@@ -3129,6 +3216,7 @@ class MainWindow(FluentWindow):
             # 打开注册表项，为当前用户设置开机启动
             key = reg.OpenKey(reg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Run", 0, reg.KEY_SET_VALUE)
             # 设置程序开机启动
+            program_path = remove_last_folder(script_dir)
             if zt:
                 reg.SetValueEx(key, program_name, 0, reg.REG_SZ, program_path)
             else:
@@ -3686,20 +3774,21 @@ class MainWindow(FluentWindow):
         self.dp_chowidgets_box.addItems(self.json_widgets)
         self.dp_chowidgets_box.setCurrentIndex(self.json_widgets.index(config.get("dp_widgets").split(".")[0]))
 
-# 息屏显示
+# 息屏组件
 class BlackScreen(QWidget):
-    def __init__(self,notime):
+    def __init__(self, notime):
         super().__init__()
+        self.nested_window = DP_Comonent
+        self.nested_window2 = clock
         self.initUI(notime)
 
-    def initUI(self,notime):
+    def initUI(self, notime):
         global DP_Comonent
+        #self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
         screen = QGuiApplication.primaryScreen()
         screen_geometry = screen.geometry()
         w_width = screen_geometry.width()  # 屏幕宽度
         w_height = screen_geometry.height()  # 屏幕高度
-
-
 
         if notime == True:
             DP_Comonent.dc_dp("notime")
@@ -3708,98 +3797,450 @@ class BlackScreen(QWidget):
         
         # 设置窗口标题和大小
         self.setWindowTitle('LingYun Class Widgets Black Screen')
-        #self.setWindowFlags(Qt.FramelessWindowHint)
-        #self.setAttribute(Qt.WA_TranslucentBackground)
-        #self.setWindowFlags(self.windowFlags() | Qt.WindowDoesNotAcceptFocus)
         self.setGeometry(0, 0, w_width, w_height)
+        self.setStyleSheet("""QWidget {background-color: black;}""")
 
-
-
-        # 创建标签
-        self.time_hei = QLabel('00:00:00',self)#, alignment=Qt.AlignCenter)
+        # 创建主布局
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
         
-        self.time_hei.setAlignment(Qt.AlignLeft)
-        self.time_hei.setGeometry(QRect(int(config['x']), int(config['y']), 500, 500))
+        # 创建容器区域用于嵌套窗口（使用绝对定位）
+        self.container_widget = QWidget(self)
+        self.container_widget.setStyleSheet("background-color: transparent; border: none;")
+        self.container_widget.resize(w_width, w_height)
 
-        # 设置字体，大小，并加粗
-        fonts = self.font_file(f"{RES}SFUI.ttc",config['fontname'],config['fontSize'])
-        #fonts = QFont(dat as['fontname'], int(da tas['fontSize']), QFont.Bold)  # 这里将字体权重设置为Bold
-        self.time_hei.setFont(fonts)
-        # 设置文本颜色为白色
-        self.time_hei.setStyleSheet(f'color:white;')
+        self.container_widget2 = QWidget(self)
+        self.container_widget2.setStyleSheet("background-color: transparent; border: none;")
+        self.container_widget2.resize(w_width, w_height)    
 
+        '''
+        # 日期和时间标签
+        self.date_label = QLabel(self)
+        self.date_label.setAlignment(Qt.AlignLeft)
         
-        # 创建按钮并添加到布局中
-        self.button = TransparentPushButton(FluentIcon.EMBED.icon(color='#FFFFFF'),"     退出", self)
+        self.time_label = QLabel(self)
+        self.time_label.setAlignment(Qt.AlignLeft)
+        
+        # 设置字体
+        self.time_font = self.font_file(f"{RES}MiSans-Bold.ttf", config['fontname'], config['fontSize'])
+        self.time_label.setFont(self.time_font)
+        self.time_label.setStyleSheet(f'color:white;')
+        self.time_label.setAttribute(Qt.WA_TranslucentBackground)
+
+
+        self.date_font = self.font_file(f"{RES}MiSans-Bold.ttf", config.get("cl_date_Typeface"), config.get("cl_date_TextSize"))
+        self.date_label.setFont(self.date_font)
+        self.date_label.setStyleSheet(f'color:white;')
+        self.date_label.setAttribute(Qt.WA_TranslucentBackground)
+
+        # 预计算并设置固定宽度
+        #self.setup_fixed_sizes()  
+        self.time_label.hide()
+        self.date_label.hide()    
+        '''
+
+
+        # 创建退出按钮
+        self.button = TransparentPushButton(FluentIcon.EMBED.icon(color='#FFFFFF'), "     退出", self)
         self.button.setStyleSheet("""color:#ffffff;""")
-        self.button.setGeometry(QRect(w_width-150, w_height-120, 50, 50))        
-
-        """self.zdy_hei = QLabel('',self)
-        self.zdy_hei.setAlignment(Qt.AlignRight)
-        self.zdy_hei.setGeometry(QRect(int(da tas['x'])-200, int(da tas['y'])+100, 500, 400))
-        self.zdy_hei.setFont(fonts)
-        self.zdy_hei.setStyleSheet(f'color:white;')"""
+        self.button.setGeometry(QRect(w_width-150, w_height-120, 50, 50))      
+    
 
         if not notime:
-            self.time_hei.show()
-        else:
-            self.time_hei.hide()
-        # 定时器更新时钟
-        clock.hide()
-        self.uptime()
-        self.timer = QTimer(self)
-        self.timer.timeout.connect(self.uptime)
-        self.timer.start(1000)#(int(dat as['update']))
+            #self.time_label.show()
+            self.nest_window()
+            self.nest_window2()
+        #else:
+        #    self.time_label.hide()
+            
+        # 初始化日期和时间显示
+        #self.uptime()
 
-        # 设置样式
-        self.setStyleSheet("""QWidget {background-color: black;}""")
+        # 保存原始窗口的位置和大小，用于分离后恢复
+        self.original_geometry = None
+        self.nested_position = None  # 保存嵌套前的位置
+        self.original_geometry2 = None
+        self.nested_position2 = None  # 保存嵌套前的位置
+        
+        # 定时器更新时钟
+        #clock.hide()
+        #self.timer = QTimer(self)
+        #self.timer.timeout.connect(self.uptime)
+        #self.timer.start(1000)
+
+        # 检测时间开启倒计时
+        self.count_timer = QTimer(self)
+        self.count_timer.timeout.connect(self.Frame_countdown)
+        self.count_timer.start(1000)
+
 
         # 连接按钮点击事件
         self.button.clicked.connect(self.up_close)
 
-    def dc(self):
-        screen = QGuiApplication.primaryScreen()  # 获取主屏幕
-        screen_geometry = screen.geometry()  # 获取屏幕的几何信息
-        w_width = screen_geometry.width()  # 屏幕宽度
-        w_height = screen_geometry.height()  # 屏幕高度
-        #fonts = self.font_file(f"{RES}SFUI.ttc",config['fontname'],config['fontSize'])
 
-        self.lingyun_Title_2 = QLabel('倒计时',self)
-        self.lingyun_Title_2.setGeometry(QRect(int(w_width)-100, 15, 181, 31))
-        #self.lingyun_Title_2.setFont(fonts)
-        #self.lingyun_Title_2.setAlignment(Qt.AlignCenter)
-        self.lingyun_Title_2.setStyleSheet('color:white;')
+    def Frame_countdown(self):
+        if config.get("dp_display_count") == "True":
+            if self.isVisible() and self.isActiveWindow():
+                if DP_Comonent.countdown == f"00:{str(int(config.get('dp_count'))+1)}":
+                    self.countdown_window = LNC.CountdownWindow(
+                        countdown=int(config.get('dp_count'))+1,
+                        font=config.get("dp_count_font"))
+                    self.countdown_window.start_countdown()
+                    self.countdown_window.show()
+    '''
+    def setup_fixed_sizes(self):
+        # 计算并设置固定宽度，确保能够容纳最长的可能文本
+        metrics = QFontMetrics(self.time_font)
+        
+        # 计算"00:00:00"和"10:20:30"两种极端情况的宽度
+        width1 = metrics.horizontalAdvance("00:00:00")
+        width2 = metrics.horizontalAdvance("11:11:11")
+        max_width = max(width1, width2)
+        
+        # 添加一些额外边距
+        self.fixed_time_width = max_width + 60
+        
+        # 对日期标签做类似处理
+        date_metrics = QFontMetrics(self.date_font)
+        # 计算最长可能的日期文本宽度
+        sample_date = "2025年12月31日 星期四"
+        self.fixed_date_width = date_metrics.horizontalAdvance(sample_date) + 40
+        
+        # 计算高度（添加一些边距）
+        self.date_height = date_metrics.height() + 20
+        self.time_height = metrics.height() + 30
 
-    def font_file(self,file,font_name,font_size):
-        # 加载字体文件
-        #global da tas
-        if font_name == "":
-            font_id = QFontDatabase.addApplicationFont(file) # 替换为你的字体文件路径
-            if font_id != -1:
-                font_families = QFontDatabase.applicationFontFamilies(font_id)
-                if font_families:
-                    font = QFont(font_families[0], int(font_size),  QFont.Bold)  # 使用加载的字体的第一个字体族，设置大小为20
-                else:
-                    font = QFont(font_name, int(font_size),  QFont.Bold)  # 如果加载失败，使用默认字体:"字体文件未包含可用字体族"
-            else:
-                font = QFont(font_name, int(font_size),  QFont.Bold)    # 如果加载失败，使用默认字体:"字体文件加载失败"
-        else:
-            font = QFont(font_name, int(font_size),  QFont.Bold)
-        return font
+    def font_file(self, file, font_name, font_size):
+        # 如果指定了字体名称，直接使用它
+        if font_name:
+            return QFont(font_name, int(font_size), QFont.Bold)
+        
+        # 尝试从文件加载字体
+        font_id = QFontDatabase.addApplicationFont(file)
+        font_families = QFontDatabase.applicationFontFamilies(font_id) if font_id >= 0 else []
+        
+        # 使用加载的字体或系统默认字体
+        return QFont(font_families[0] if font_families else "", int(font_size), QFont.Bold)
 
     def uptime(self):
         now = datetime.now()
+        if self.isVisible() and self.isActiveWindow():
+            if DP_Comonent.countdown == f"00:{str(int(config.get('dp_count'))+1)}":
+                if not hasattr(self, 'countdown_window') or not self.countdown_window:
+                    self.countdown_window = LNC.CountdownWindow(countdown=int(config.get('dp_count'))+1)
+                self.countdown_window.start_countdown()
+                self.countdown_window.show()
+        #else:
+        #    pass
+            #print("窗口不可见或未获得焦点")
+        # 更新日期显示
+        date_format = clock.api_formatted_date()
+        self.date_label.setText(date_format)
+        
+        # 更新时间显示
         if config.get('cl_time_Second') == "True":
             time_str = now.strftime('%H:%M:%S')
         else:
             time_str = now.strftime('%H:%M')
-        self.time_hei.setText(time_str)
+        self.time_label.setText(time_str)
+        
+        # 设置标签位置
+        self.update_labels_position()
 
+    def update_labels_position(self):
+        # 获取字体指标计算文本宽高
+        date_metrics = QFontMetrics(self.date_font)
+        time_metrics = QFontMetrics(self.time_font)
+        
+        # 计算文本实际宽高（添加一些边距）
+        date_width = date_metrics.horizontalAdvance(self.date_label.text()) + 40
+        date_height = date_metrics.height() + 20
+        
+        time_width = time_metrics.horizontalAdvance(self.time_label.text()) + 60
+        time_height = time_metrics.height() + 30
+
+        self.date_label.setGeometry(
+            int(config.get("x")) + (time_height) - 23,
+            int(config.get("y")),
+            date_width,
+            date_height
+        )
+        
+        self.time_label.setGeometry(
+            int(config.get("x")),
+            int(config.get("y")) + date_height - 23,
+            time_width,
+            time_height
+        )
+    '''
     def up_close(self):
         DP_Comonent.dc_dp("close")
+        self.detach_window()
+        self.detach_window2()
+
         if config.get('cl_Switch') == "True":
             clock.show()
         self.destroy()
+        
+    def nest_window(self):
+        """将指定窗口嵌套到容器中，保持原x、y坐标不变"""
+        if self.nested_window and self.nested_window.parent() is None:
+            # 保存原始窗口的位置和大小
+            self.original_geometry = self.nested_window.geometry()
+            
+            # 计算嵌套窗口在容器中的相对位置
+            # 保持原窗口的x、y坐标相对于屏幕不变
+            global_pos = self.nested_window.pos()
+            container_pos = self.container_widget.mapFromGlobal(global_pos)
+            self.nested_position = container_pos
+            
+            # 将窗口添加到容器中（使用绝对定位）
+            self.nested_window.setParent(self.container_widget)
+            self.nested_window.move(container_pos)
+            self.nested_window.show()
+
+    def nest_window2(self):
+        """将指定窗口嵌套到容器中，保持原x、y坐标不变"""
+        if self.nested_window2 and self.nested_window2.parent() is None:
+            # 保存原始窗口的位置和大小
+            self.original_geometry2 = self.nested_window2.geometry()
+            
+            # 计算嵌套窗口在容器中的相对位置
+            # 保持原窗口的x、y坐标相对于屏幕不变
+            global_pos = self.nested_window2.pos()
+            container_pos = self.container_widget2.mapFromGlobal(global_pos)
+            self.nested_position2 = container_pos
+            
+            # 将窗口添加到容器中（使用绝对定位）
+            self.nested_window2.setParent(self.container_widget2)
+            self.nested_window2.move(container_pos)
+            self.nested_window2.show()
+
+            self.nested_window2.time_label.setStyleSheet(f'color: rgba(255,255,255,255);')
+            self.nested_window2.date_label.setStyleSheet(f'color: rgba(255,255,255,255);')
+
+    def detach_window(self):
+        """从容器中分离窗口，恢复为独立窗口"""
+        if self.nested_window and self.nested_window.parent() == self.container_widget:
+            # 计算窗口在屏幕中的绝对位置
+            if self.nested_position:
+                global_pos = self.container_widget.mapToGlobal(self.nested_position)
+            else:
+                global_pos = self.nested_window.pos()
+            
+            # 设置父窗口为None
+            self.nested_window.setParent(None)
+
+            self.nested_window.setWindowFlags(self.nested_window.windowFlags() | Qt.Window | Qt.Tool)
+            
+            # 恢复原始窗口的位置和大小
+            if self.original_geometry:
+                self.nested_window.setGeometry(
+                    global_pos.x(), 
+                    global_pos.y(), 
+                    self.original_geometry.width(), 
+                    self.original_geometry.height()
+                )
+            else:
+                self.nested_window.move(global_pos)
+            
+            # 显示窗口
+            self.nested_window.show()
+
+    def detach_window2(self):
+        """从容器中分离窗口，恢复为独立窗口"""
+        if self.nested_window2 and self.nested_window2.parent() == self.container_widget2:
+            # 计算窗口在屏幕中的绝对位置
+            if self.nested_position2:
+                global_pos = self.container_widget2.mapToGlobal(self.nested_position2)
+            else:
+                global_pos = self.nested_window2.pos()
+            
+            # 设置父窗口为None
+            self.nested_window2.setParent(None)
+
+            self.nested_window2.setWindowFlags(self.nested_window2.windowFlags() | Qt.Window | Qt.Tool)
+            
+            # 恢复原始窗口的位置和大小
+            if self.original_geometry2:
+                self.nested_window2.setGeometry(
+                    global_pos.x(), 
+                    global_pos.y(), 
+                    self.original_geometry2.width(), 
+                    self.original_geometry2.height()
+                )
+            else:
+                self.nested_window2.move(global_pos)
+            
+            # 显示窗口
+            self.nested_window2.show()
+
+            time_rgba = ast.literal_eval(config.get("cl_time_TextColor"))
+            date_rgba = ast.literal_eval(config.get("cl_date_TextColor"))            
+            self.nested_window2.time_label.setStyleSheet(f'color: rgba({time_rgba[0]},{time_rgba[1]},{time_rgba[2]},{int(config.get("cl_Transparent"))});')
+            self.nested_window2.date_label.setStyleSheet(f'color: rgba({date_rgba[0]},{date_rgba[1]},{date_rgba[2]},{int(config.get("cl_Transparent"))});')
+
+    def closeEvent(self, event: QCloseEvent) -> None:
+        if not is_system_shutting_down():
+            event.ignore()
+        else:
+            self.up_close()
+
+'''
+
+class BlackScreen(QWidget):
+    def __init__(self, notime=False):
+        super().__init__()
+        self.nested_window = None
+        self.nested_window2 = None
+        self.notime = notime
+        self.initUI(notime)
+
+    def initUI(self, notime):
+        global DP_Comonent, clock
+        self.nested_window = DP_Comonent  # 第一个嵌套窗口
+        self.nested_window2 = clock       # 第二个嵌套窗口
+
+        screen = QGuiApplication.primaryScreen()
+        w_width, w_height = screen.geometry().width(), screen.geometry().height()
+
+        self.setWindowTitle('LingYun Class Widgets Black Screen')
+        self.setGeometry(0, 0, w_width, w_height)
+        self.setStyleSheet("QWidget {background-color: black;}")
+
+        # 创建主布局（仅需一次，避免重复）
+        if not hasattr(self, 'main_layout'):  # 确保布局未创建过
+            self.main_layout = QVBoxLayout(self)
+            self.main_layout.setContentsMargins(0, 0, 0, 0)
+
+        # 容器组件使用绝对定位，不添加到布局中
+        self.container_widget = QWidget(self)
+        self.container_widget.setGeometry(0, 0, w_width, w_height)  # 直接设置位置和大小
+        self.container_widget.setStyleSheet("background-color: transparent;")
+
+        # 退出按钮：使用绝对定位，不添加到布局中
+        self.button = TransparentPushButton(
+            FluentIcon.EMBED.icon(color='#FFFFFF'), 
+            "     退出", 
+            self
+        )
+        self.button.setStyleSheet("color:#ffffff;")
+        self.button.setGeometry(QRect(w_width-150, w_height-120, 150, 50))  # 调整按钮尺寸
+
+        if not notime:
+            self.nest_window()
+            self.nest_window2()
+
+        self.button.clicked.connect(self.up_close)
+
+
+    def nest_window(self):
+        """将指定窗口嵌套到容器中，保持原x、y坐标不变"""
+        if self.nested_window and self.nested_window.parent() is None:
+            # 保存原始窗口的位置和大小
+            self.original_geometry = self.nested_window.geometry()
+            
+            # 计算嵌套窗口在容器中的相对位置
+            # 保持原窗口的x、y坐标相对于屏幕不变
+            global_pos = self.nested_window.pos()
+            container_pos = self.container_widget.mapFromGlobal(global_pos)
+            self.nested_position = container_pos
+            
+            # 将窗口添加到容器中（使用绝对定位）
+            self.nested_window.setParent(self.container_widget)
+            self.nested_window.move(container_pos)
+            self.nested_window.show()
+    
+    def nest_window2(self):
+        """将第二个窗口嵌套到容器中，保持原x、y坐标不变"""
+        if self.nested_window2 and self.nested_window2.parent() is None:
+            # 保存原始窗口的位置和大小
+            self.original_geometry2 = self.nested_window2.geometry()
+            
+            # 计算嵌套窗口在容器中的相对位置
+            global_pos = self.nested_window2.pos()
+            container_pos = self.container_widget.mapFromGlobal(global_pos)
+            self.nested_position2 = container_pos
+            
+            # 将窗口添加到容器中
+            self.nested_window2.setParent(self.container_widget)
+            self.nested_window2.move(container_pos)
+            self.nested_window2.show()
+    
+    def detach_window(self):
+        """从容器中分离窗口，恢复为独立窗口"""
+        if self.nested_window and self.nested_window.parent() == self.container_widget:
+            # 计算窗口在屏幕中的绝对位置
+            if self.nested_position:
+                global_pos = self.container_widget.mapToGlobal(self.nested_position)
+            else:
+                global_pos = self.nested_window.pos()
+            
+            # 设置父窗口为None
+            self.nested_window.setParent(None)
+
+            self.nested_window.setWindowFlags(self.nested_window.windowFlags() | Qt.Window | Qt.Tool)
+            
+            # 恢复原始窗口的位置和大小
+            if self.original_geometry:
+                self.nested_window.setGeometry(
+                    global_pos.x(), 
+                    global_pos.y(), 
+                    self.original_geometry.width(), 
+                    self.original_geometry.height()
+                )
+            else:
+                self.nested_window.move(global_pos)
+            
+            # 显示窗口
+            self.nested_window.show()
+    
+    def detach_window2(self):
+        """从容器中分离第二个窗口，恢复为独立窗口"""
+        if self.nested_window2 and self.nested_window2.parent() == self.container_widget:
+            # 计算窗口在屏幕中的绝对位置
+            if self.nested_position2:
+                global_pos = self.container_widget.mapToGlobal(self.nested_position2)
+            else:
+                global_pos = self.nested_window2.pos()
+            
+            # 设置父窗口为None
+            self.nested_window2.setParent(None)
+
+            self.nested_window2.setWindowFlags(self.nested_window2.windowFlags() | Qt.Window | Qt.Tool)
+            
+            # 恢复原始窗口的位置和大小
+            if self.original_geometry2:
+                self.nested_window2.setGeometry(
+                    global_pos.x(), 
+                    global_pos.y(), 
+                    self.original_geometry2.width(), 
+                    self.original_geometry2.height()
+                )
+            else:
+                self.nested_window2.move(global_pos)
+            
+            # 显示窗口
+            if config.get('cl_Switch') == "True":
+                self.nested_window2.show()
+
+    def up_close(self):
+        DP_Comonent.dc_dp("close")
+        self.detach_window()
+        self.detach_window2()  # 分离第二个窗口
+        #if config.get('cl_Switch') == "True":
+        #    clock.show()
+        #延迟
+        QTimer.singleShot(100, self.hide)
+        #(self.hide())
+
+    def closeEvent(self, event: QCloseEvent) -> None:
+        if not is_system_shutting_down():
+            event.ignore()
+        else:
+            self.up_close()
+
+'''
 
 # 主题色
 class ThemeManager(QObject):
@@ -3850,6 +4291,7 @@ class Desktop_Component(QWidget):
 
         self.dc = False # 息屏标志
 
+
         self.initUI()
     def initUI(self):
         global display_x, display_y
@@ -3858,41 +4300,35 @@ class Desktop_Component(QWidget):
         display_x = screen_geometry.width()  # 屏幕宽度
         display_y = screen_geometry.height()  # 屏幕高度
         
-        self.setWindowFlags(Qt.SplashScreen | Qt.FramelessWindowHint)
-
-        self.setWindowFlags(self.windowFlags() | Qt.WindowDoesNotAcceptFocus)
-        
-        self.setAttribute(Qt.WA_TranslucentBackground)  # 使背景透明
-
-
+        self.flags = Qt.SplashScreen | Qt.FramelessWindowHint | Qt.Tool
         if config.get('dp_Pin') == 'True':
-            self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
+            self.flags |= Qt.WindowStaysOnTopHint
+        elif config.get('dp_Pin') == 'Under':
+            self.flags |= Qt.WindowDoesNotAcceptFocus
+        self.setWindowFlags(self.flags)
+        self.setAttribute(Qt.WA_TranslucentBackground)
+
 
         self.move(display_x,12)
         f = self.uic_ui()
         if f == False:
             return
         
-        #self.class_up_time = QTimer(self)
-        #self.class_down_time = QTimer(self)
-
         self.class_time = QTimer(self)
-        #self.class_time_down = QTimer(self)
+
+        self.countdown = ""
 
         self.updown = False # false下课 ture上课
         self.timess = QTimer(self)
         self.alert() # 倒计时模块
         self.update_Widgets()
         self.update_duty()
-        #self.update_widget()
-        
+
         #窗口在屏幕的位置初始化
         self.DP_x = display_x - int(config.get("dp_display_edge"))
         self.DP_y = 12
         self.animation_i = display_x - 260
         self.animations()
-
-
 
         if config.get('dp_Switch') == "True":
             self.show()
@@ -4059,7 +4495,7 @@ class Desktop_Component(QWidget):
         self.up_col.start(20)
 
     # 原单击和双击事件
-    """    def eventFilter(self, source, event):
+    """def eventFilter(self, source, event):
             if event.type() == QEvent.MouseButtonPress:
                 self.press_position = event.pos()
                 self.click_timer.start()
@@ -4086,7 +4522,6 @@ class Desktop_Component(QWidget):
             
             return False
     """
-    
     def eventFilter(self, source, event):
         if event.type() == QEvent.MouseButtonPress:
             self.press_position = event.pos()
@@ -4107,6 +4542,9 @@ class Desktop_Component(QWidget):
         return super().eventFilter(source, event)
     def on_single_click(self):
         # 获取窗口的坐标位置
+
+        if self.dc or config.get('dp_Pin') == 'Under':
+            return
         window_pos = self.frameGeometry().topLeft()
         if window_pos.x() == self.DP_x:
             self.animation_rect_shrink.start()
@@ -4152,11 +4590,28 @@ class Desktop_Component(QWidget):
 
                 #self.hide()
         elif choose == "dp_Pin":
-            if value:
-                config['dp_Pin'] = "True"
-                self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
-            else:
-                self.setWindowFlags(self.windowFlags() & ~Qt.WindowStaysOnTopHint)
+
+            if value == "True":
+                if not (self.flags & Qt.WindowStaysOnTopHint):
+                    self.flags |= Qt.WindowStaysOnTopHint
+                if self.flags & Qt.WindowDoesNotAcceptFocus:
+                    self.flags &= ~Qt.WindowDoesNotAcceptFocus
+                self.setWindowFlags(self.flags)
+            elif value == "False":
+                if self.flags & Qt.WindowStaysOnTopHint:
+                    self.flags &= ~Qt.WindowStaysOnTopHint
+                if self.flags & Qt.WindowDoesNotAcceptFocus:
+                    self.flags &= ~Qt.WindowDoesNotAcceptFocus
+                self.setWindowFlags(self.flags)
+            elif value == "Under":
+                if not(self.flags & Qt.WindowStaysOnTopHint):
+                    self.flags &= ~Qt.WindowStaysOnTopHint
+                if not(self.flags & Qt.WindowDoesNotAcceptFocus):
+                    self.flags |= Qt.WindowDoesNotAcceptFocus
+                self.setWindowFlags(self.flags)
+                window_pos = self.frameGeometry().topLeft()
+                if window_pos.x() == display_x-35:
+                    QTimer.singleShot(500, self.animation_rect_expand.start)
             if config.get("dp_Switch"):
                 self.show()
         elif choose == "dp_Typeface":
@@ -4218,11 +4673,14 @@ class Desktop_Component(QWidget):
     def dc_dp(self,event):
         if event == "open":
             self.dc = True
-            self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
+            #self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
             if config.get("dp_xiping") == "True":
                 self.show()
             else:
                 self.hide()
+            window_pos = self.frameGeometry().topLeft()
+            if window_pos.x() == display_x-35:
+                QTimer.singleShot(500, self.animation_rect_expand.start)
             self.TOPIC()
             self.lingyun_down.setStyleSheet("color: rgba(255, 255, 255, 255)")
             self.lingyun_class.setStyleSheet("color: rgba(255, 255, 255, 255)")
@@ -4556,7 +5014,9 @@ class Desktop_Component(QWidget):
         adjusted_remaining_time = remaining_time + timedelta(seconds=lag)
         
         s = f"{(adjusted_remaining_time.seconds // 60):02}:{(adjusted_remaining_time.seconds % 60):02}"
+        self.countdown = s
         self.lingyun_down.setText(s)
+
 
         if lag < 0:
             next = end_datetime + timedelta(seconds=lag)
@@ -4945,8 +5405,63 @@ class Window(QWidget):#(AcrylicWindow):
             tops.setting_show()
 
 # 托盘右键菜单
+"""
 class SystemTrayMenus(SystemTrayMenu):
     exitSignal = pyqtSignal()
+
+    def tray_icon_activated(self, reason):
+        if reason == QSystemTrayIcon.Trigger:
+            #print('单击')
+            self.black_screen(False)
+        elif reason == QSystemTrayIcon.DoubleClick:
+            #print('双击')
+            pass
+
+    def setting_show(self):
+        global settings_window
+        # not hasattr(self, 'settings_window') 
+        if 'settings_window' not in globals():
+            settings_window = MainWindow()
+            screen_geometry = QGuiApplication.primaryScreen().geometry()  # 获取屏幕的几何信息
+            display_x = screen_geometry.width()  # 屏幕宽度
+            display_y = screen_geometry.height()  # 屏幕高度  
+            window_width = self.width()
+            window_height = self.height()
+            x = (display_x - window_width) / 3
+            y = (display_y - window_height) / 3
+            settings_window.move(x, y)
+        settings_window.show()
+        settings_window.showNormal()
+        settings_window.raise_()
+        settings_window.activateWindow()
+    def black_screen(self,notime):
+        #判断是否存在黑屏窗口
+        self.black_screen_window = BlackScreen(notime)           
+        self.black_screen_window.showFullScreen()  # 使用全屏显示
+        self.black_screen_window.show()
+    def exit_app(self):
+        global tops,clock,DP_Comonent
+    
+        if tops and tops.tray_icon:
+            tops.tray_icon.hide()
+
+        clock.animation_hide.start()
+        DP_Comonent.animation_rect_hide.start() 
+
+        # 停止监听器线程
+        theme_manager.themeListener.terminate()
+        theme_manager.themeListener.deleteLater()
+
+        QTimer.singleShot(500, lambda: QApplication.quit())
+
+
+"""
+class SystemTrayMenus(SystemTrayMenu):
+    exitSignal = pyqtSignal()
+    def __init__(self):
+        super().__init__()
+        self.black_screen_window = None  # 新增：用于记录黑屏窗口实例
+
     def create_tray_icon(self):
         self.tray_icon = QSystemTrayIcon(QIcon(f'{RES}ico/LINGYUN.ico'), self)
         self.tray_icon.setToolTip('凌云班级组件')
@@ -4956,10 +5471,10 @@ class SystemTrayMenus(SystemTrayMenu):
         settings_action.triggered.connect(self.setting_show)
 
         black_screen_action = Action('息屏显示', self)
-        black_screen_action.triggered.connect(lambda: self.black_screen(False))
+        black_screen_action.triggered.connect(lambda: self.show_black_screen(False))
         
         black_screen = Action(FluentIcon.HOME_FILL,'息屏(不带时间)', self)
-        black_screen.triggered.connect(lambda: self.black_screen(True))
+        black_screen.triggered.connect(lambda: self.show_black_screen(True))
 
         restart = Action(FluentIcon.UPDATE,'重启本软件', self)
         restart.triggered.connect(restart_program)
@@ -4990,11 +5505,26 @@ class SystemTrayMenus(SystemTrayMenu):
 
     def tray_icon_activated(self, reason):
         if reason == QSystemTrayIcon.Trigger:
-            #print('单击')
-            self.black_screen(False)
+            self.show_black_screen(False)  # 使用新方法管理窗口显示
         elif reason == QSystemTrayIcon.DoubleClick:
-            #print('双击')
             pass
+
+    def show_black_screen(self, notime):
+        """管理黑屏窗口的显示，避免重复创建"""
+        # 如果窗口不存在或已关闭，则创建新实例
+        if not self.black_screen_window or not self.black_screen_window.isVisible():
+            self.black_screen_window = BlackScreen(notime)
+            #self.black_screen_window.initUI(notime)  # 显式调用初始化
+            self.black_screen_window.showFullScreen()
+        else:
+            # 若窗口存在则激活并前置显示
+            self.black_screen_window.showNormal()
+            self.black_screen_window.raise_()
+            self.black_screen_window.activateWindow()
+            self.black_screen_window.showFullScreen()
+            DP_Comonent.dc_dp("open")            
+            self.black_screen_window.nest_window()
+            self.black_screen_window.nest_window2()
 
     def setting_show(self):
         global settings_window
@@ -5013,10 +5543,7 @@ class SystemTrayMenus(SystemTrayMenu):
         settings_window.showNormal()
         settings_window.raise_()
         settings_window.activateWindow()
-    def black_screen(self,notime):
-        self.black_screen_window = BlackScreen(notime)
-        self.black_screen_window.showFullScreen()  # 使用全屏显示
-        self.black_screen_window.show()
+
     def exit_app(self):
         global tops,clock,DP_Comonent
     
@@ -5195,6 +5722,29 @@ def check_component_in_ui(ui_file_path, component_name):
         print(f"Error reading UI file: {e}")
         return False
 
+# 去掉路径字符串中的最后一个文件夹
+def remove_last_folder(path_str,new_file_name="LingYun_Class_Widgets.exe"):
+    """
+    移除路径中的最后一个文件夹，并添加新的文件名
+    
+    参数:
+    path_str (str): 原始路径，如 "C:/Users/username/Documents/project/data"
+    new_file_name (str): 要添加的文件名，如 "LingYun_Class_Widgets.exe"
+    
+    返回:
+    str: 处理后的完整路径，如 "C:/Users/username/Documents/project/LingYun_Class_Widgets.exe"
+    """
+    # 1. 获取父目录（脱掉最后一个文件夹）
+    parent_dir = os.path.dirname(os.path.normpath(path_str))
+    
+    # 2. 在父目录中添加新的文件名
+    new_path = os.path.join(parent_dir, new_file_name)
+    
+    return new_path
+
+
+
+
 if __name__ == '__main__':
     # 适配高DPI缩放
     QApplication.setHighDpiScaleFactorRoundingPolicy(Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
@@ -5210,16 +5760,25 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
 
     arg = get_argument()
+    '''
     if arg and arg[0] == "/update":
         # 0:zip路径 1:新路径 2:旧版本号 3:新版本号
-        window = install_ly.UpdateWindow([tempfile.gettempdir() + "/LingYun/Temp.zip", arg[1], arg[2], Version])
+        #window = install_ly.UpdateWindow([tempfile.gettempdir() + "/LingYun/Temp.zip", arg[1], arg[2], Version])
+        pass
     else:
-        main = Initialization()
+    '''
+    main = Initialization()
+    if os.path.exists(USER_RES) and os.path.isdir(USER_RES):
         main.init()
-        #sys.excepthook = main.handle_exception
-        
-        # 处理/clean参数
-        if arg and arg[0] == "/clean":
-            QTimer.singleShot(3000, lambda: shutil.rmtree(tempfile.gettempdir() + "/LingYun"))
+    else:
+        #QMessageBox.critical(None, "警告", "用户资源文件夹不存在或损坏！即将使用默认资源。")
+        os.makedirs(USER_RES, exist_ok=True)
+        shutil.copytree("LingYun_Profile", USER_RES, dirs_exist_ok=True)
+        main.init()
+    sys.excepthook = main.handle_exception
+    
+    # 处理/clean参数
+    if arg and arg[0] == "/clean":
+        QTimer.singleShot(3000, lambda: shutil.rmtree(tempfile.gettempdir() + "/LingYun"))
 
     sys.exit(app.exec_())
