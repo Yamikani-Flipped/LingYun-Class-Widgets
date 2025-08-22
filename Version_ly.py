@@ -50,13 +50,18 @@ class version:
             return False
         
         # 基础版本相同，比较预发布标识
+        if not self.is_prerelease and not other.is_prerelease:
+            # 两者都没有预发布信息，相等
+            return False
         if not self.is_prerelease and other.is_prerelease:
+            # 自己没有预发布，对方有，自己更大
             return False
         elif self.is_prerelease and not other.is_prerelease:
+            # 自己有预发布，对方没有，自己更小
             return True
         
-        # 两者都有预发布标识，按字符串比较
-        return self.prerelease < other.prerelease
+        # 两者都有预发布标识，按解析后的预类型和编号比较
+        return self.pre < other.pre
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other,version):

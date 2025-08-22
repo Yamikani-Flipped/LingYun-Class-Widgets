@@ -5,9 +5,12 @@ import sys, os, logging, winreg as reg, webbrowser, warnings, json,threading,tim
 from datetime import datetime,timedelta,date
 import traceback
 import shutil,zipfile,tempfile
-import download_ly,LNC # ,install_ly
+import download_ly, LNC# ,install_ly
 from WaveAnimation import WaveAnimation
 from Version_ly import version
+from Sortable import HorizontalSortWidget
+from config_handler import ConfigHandler
+from Desktop_shortcut_component import ShortcutManager
 import xml.etree.ElementTree as ET
 from functools import partial
 
@@ -38,7 +41,7 @@ import subprocess
 
 
 warnings.filterwarnings("ignore", category=DeprecationWarning) # 忽略警告
-Version = '1.6.6-Beta'
+Version = '1.6.11'
 Version_Parse = version(Version)
 # 1.6.6以上版本修改为配置文件存电脑文档文件夹中
 #USER_RES = str(Path(__file__).resolve().parent.parent / "Resource").replace('\\', '/') + "/"
@@ -56,15 +59,14 @@ script_full_path = sys.argv[0]
 os.chdir(script_dir)# 切换工作目录QPropertyAnimation
 
 
-
 # 初始化程序整体
 class Initialization(QObject):
     update_ui_signal = pyqtSignal(str, str, str)
     def __init__(self,parent=None):
         super(Initialization, self).__init__(parent)
     def init(self):
-        global theme_manager,theme,clock,tops,warn,DP_Comonent,gl_weekday,cloud_sync,adj_weekday,toaster,update_channel,ncu#,yun_warn
-        
+        global theme_manager,theme,clock,tops,warn,DP_Comonent,gl_weekday,cloud_sync,adj_weekday,toaster,update_channel,ncu,desk_short#,yun_warn
+ 
         # 检测是否完成云同步变量
         cloud_sync = False
 
@@ -127,6 +129,11 @@ class Initialization(QObject):
         # 创建桌面组件
         DP_Comonent = Desktop_Component()
         warn = class_warn()
+
+        # 创建快捷桌面组件
+        desk_short = ShortcutManager()
+        if config.get('dsc_Switch') == "True":
+            desk_short.show()
 
         theme_manager.customSignal.connect(DP_Comonent.TOPIC)
     def get_datas(self):
@@ -229,7 +236,22 @@ class Initialization(QObject):
                   'check_net' : "True", #是否检测网络连接
                   'auto_update' : "True", #是否自动更新
                   'update_channel' : 'stable', # 更新渠道 stable:稳定版 beta:测试版
-                  'update_ncu' : '0'
+                  'update_ncu' : '0',
+
+                  'dsc_Switch' : 'True', # 是否开启桌面组件
+                  'dsc_x' : '0', # 桌面组件x位置
+                  'dsc_y' : '0', # 桌面组件y位置
+                  'dsc_width' : 'None', # 桌面组件宽度 None为自动
+                  'dsc_lock' : 'False', # 是否锁定桌面组件位置
+                  'dsc_put' : 'True', # 是否开启收起按钮
+                  'dsc_Typeface' : '', # 桌面组件字体
+                  'dsc_Typeface_size' : '15', # 桌面组件字体大小
+                  'dsc_teacherfile_path' : 'None', # 教师文件夹路径 None为自动
+                  'dsc_Color' : '#000000',
+                  'dsc_tran' : '0.8', # 桌面组件透明度
+                  'dsc_halo_switch' : 'True', # 光环开关
+                  'dsc_length' : 'None', # 桌面组件长度 None为自动
+
 
                   }
         
@@ -308,8 +330,8 @@ class Initialization(QObject):
             try:
                 response = requests.get(url)
                 if response.status_code == 200:
+                    flag = True                    
                     callback(response,200)  # 返回
-                    flag = True
                 else:
                     if config.get("print_log") == "True":# and hasattr(Initialization, 'logger'):
                         self.logger.warning(f"网络请求失败，状态码: {response.status_code}")
@@ -317,7 +339,9 @@ class Initialization(QObject):
                 if config.get("print_log") == "True":# and hasattr(Initialization, 'logger'):
                     self.logger.warning(f"网络请求失败 {str(e)}")
             if flag == False and error_callback != None:
+                print("网络请求失败，状态码:",flags)
                 error_callback(False,flags) # 返回错误
+
 
         # 创建并启动线程
         thread = threading.Thread(target=fetch)
@@ -354,32 +378,9 @@ class Initialization(QObject):
 
     def yun_check_verison(self,data=None,flag=None,ty=None):
         global yun_version,yun_data_version,update_channel,ncu
-        if self.in_update == True:
+        if self.in_update:
             return
-        if flag == None: # 第一次请求
-            url = "https://lingyun-6e2.pages.dev/config_public.json"
-            self.fetch_data(url, self.yun_check_verison,1,self.yun_check_verison)
-            return 
-        elif flag == 1: # 第2次请求
-            url = "https://raw.bgithub.xyz/Yamikani-Flipped/LingYun-Class-Widgets/main/config_public.json"
-            self.fetch_data(url, self.yun_check_verison,3,self.yun_check_verison)
-            return        
-        #elif flag == 2: # 第二次请求 失效
-        #    url = "https://github.moeyy.xyz/https://github.com/Yamikani-Flipped/LingYun-Class-Widgets/blob/main/config_public.json"
-        #    self.fetch_data(url, self.yun_check_verison,2,self.yun_check_verison)
-        #    return
-        elif flag == 3: # 第4次请求
-            url = "https://gitee.com/yamikani/LingYun-Class-Widgets/raw/main/config_public.json"
-            self.fetch_data(url, self.yun_check_verison,4,self.yun_check_verison)
-            return
-        
-        elif flag == 4: # 连续4次失败，通知失败
-            if config.get("check_net") == "True": # 通知
-                self.to_message("网络连接失败，请检查网络！","如果要禁用此通知，请前往“设置>软件设置”进行修改。如果网络已连接，请检查是否打开了VPN，防火墙是否拦截。")
-            if "settings_window" in globals():
-                settings_window.check_update("获取失败","check_end")
-
-        elif flag == 200: # 成功
+        if flag == 200: # 成功
             # 云版本号
             data = data.json()
             j = json.dumps(data, indent=4, ensure_ascii=False)
@@ -391,8 +392,7 @@ class Initialization(QObject):
                     yun_version = version(ast.literal_eval(j)['beta_version'])
             else:
                 yun_version = version(ast.literal_eval(j)['version'])
-
-            yun_data_version = ast.literal_eval(j)                
+            yun_data_version = ast.literal_eval(j)
             # 更新频道
             ncu = {
                 "Github_1":f"https://bgithub.xyz/Yamikani-Flipped/LingYun-Class-Widgets/releases/download/v{yun_version.version_str}/LingYun_Class_Widgets_v{yun_version.version_str}_Install_x64.exe",
@@ -401,6 +401,7 @@ class Initialization(QObject):
                 }
             update_channel = list(ncu.values())[int(config.get("update_ncu"))]
             tys = None
+
             if Version_Parse < yun_version:  # 有新版本
                 # 自动更新 (待完善，链接需要灵活，设置可改)
                 tys = "update"
@@ -409,17 +410,42 @@ class Initialization(QObject):
                     if config.get("check_update") == "True" and ty == None:
                         self.to_message('凌云班级组件正在更新中','下载完成后稍后会自动重启进行安装。')
                         save = tempfile.gettempdir() + "/LingYun/Temp.zip"
-
                         download_ly.download_file(update_channel,save,main.download_ok)
                 else:
                     if config.get("check_update") == "True":
                         self.to_message('凌云班级组件有新版本啦！',f'目前已禁用自动更新。建议及时更新，以获取最佳体验，请前往设置->关于中查看!(新版本为{yun_version.full_version})')
-
-            elif Version_Parse >= yun_version:
-                # print("当前版本与云端一致或更高")
-                pass
+            #elif Version_Parse >= yun_version:
+            #    # print("当前版本与云端一致或更高")
+            #    pass
             if "settings_window" in globals():
                 self.update_ui_signal.emit(yun_version.full_version, "check_end", tys)
+            return
+
+
+        elif flag == None: # 第一次请求
+            url = "https://raw.bgithub.xyz/Yamikani-Flipped/LingYun-Class-Widgets/main/config_public.json"
+            self.fetch_data(url, self.yun_check_verison,1,self.yun_check_verison)
+            return 
+        elif flag == 1: # 第2次请求
+            url = "https://lingyun-6e2.pages.dev/config_public.json"
+            self.fetch_data(url, self.yun_check_verison,2,self.yun_check_verison)
+            return        
+        #elif flag == 2: # 第二次请求 失效
+        #    url = "https://github.moeyy.xyz/https://github.com/Yamikani-Flipped/LingYun-Class-Widgets/blob/main/config_public.json"
+        #    self.fetch_data(url, self.yun_check_verison,2,self.yun_check_verison)
+        #    return
+        elif flag == 2: # 第3次请求
+            url = "https://gitee.com/yamikani/LingYun-Class-Widgets/raw/main/config_public.json"
+            self.fetch_data(url, self.yun_check_verison,3,self.yun_check_verison)
+            return
+        
+        elif flag == 3: # 连续3次失败，通知失败
+            if config.get("check_net") == "True": # 通知
+                print("网络连接失败，无法获取云端版本信息！")
+                self.to_message("网络连接失败，请检查网络！","如果要禁用此通知，请前往“设置>软件设置”进行修改。如果网络已连接，请检查是否打开了VPN，防火墙是否拦截。")
+            if "settings_window" in globals():
+                settings_window.check_update("获取失败","check_end")
+
 
     def to_message(self,title,msg):
         # 创建通知器对象
@@ -816,7 +842,7 @@ class Initialization(QObject):
             f"错误的详细信息为下，目前无法继续运行，请反馈给开发者。敬请谅解！\n\n"
             f"错误类型: {exc_type.__name__}\n"
             f"错误信息: {str(exc_value)}\n\n"
-            "错误日志保存在软件目录Resource下的log文件夹中。"
+            "错误日志保存在此电脑用户“文档”中LingYun_Profile下的log文件夹中。"
         )
         
         # 使用现有Dialog类创建对话框
@@ -1086,6 +1112,9 @@ class MainWindow(FluentWindow):
 
         super().__init__()
         self.close_event_args = None
+
+        self.addexe = AddNewExeDialog()    
+
         self.addui()
         self.initNavigation()
         self.initWindow()
@@ -1093,6 +1122,10 @@ class MainWindow(FluentWindow):
         screen_geometry = screen.geometry() 
         display_x = screen_geometry.width() 
         display_y = screen_geometry.height()
+
+        self.CH = ly_ConfigHandler()
+
+
 
         main.update_ui_signal.connect(self.update_ui_with_check_result)
 
@@ -1119,6 +1152,7 @@ class MainWindow(FluentWindow):
         self.addSubInterface(self.duty, FluentIcon.CALENDAR, '值日表配置')
         self.addSubInterface(self.display, FluentIcon.DEVELOPER_TOOLS, '息屏显示配置')
         self.addSubInterface(self.adjustment, FluentIcon.SETTING, '调课管理')
+        self.addSubInterface(self.dsc, FluentIcon.FOLDER, '桌面快捷组件设置')
         
         
         #self.navigationInterface.addSeparator()
@@ -1126,8 +1160,8 @@ class MainWindow(FluentWindow):
         
         self.addSubInterface(self.yun, FluentIcon.CLOUD, '集中控制'     ,NavigationItemPosition.BOTTOM)
         self.addSubInterface(self.soft, FluentIcon.SETTING, '软件设置'  ,NavigationItemPosition.BOTTOM)
-        self.addSubInterface(self.updates, FluentIcon.UPDATE, '更新日志', NavigationItemPosition.BOTTOM)
-        self.addSubInterface(self.info, FluentIcon.INFO, '关于与更新'   , NavigationItemPosition.BOTTOM)
+        self.addSubInterface(self.updates, FluentIcon.UPDATE, '更新日志',NavigationItemPosition.BOTTOM)
+        self.addSubInterface(self.info, FluentIcon.INFO, '关于与更新'   ,NavigationItemPosition.BOTTOM)
         
 
         self.stackedWidget.currentChanged.connect(lambda index: self.stacked(index))
@@ -1155,12 +1189,11 @@ class MainWindow(FluentWindow):
             self.yun.setObjectName("yun")
             self.adjustment = uic.loadUi(f'{RES}ui/set_adjustment.ui')
             self.adjustment.setObjectName("adjustment")
-
-
+            self.dsc = uic.loadUi(f'{RES}ui/set_dsc.ui')
+            self.dsc.setObjectName("dsc")
 
         except Exception as e:
             self.error("导入UI文件出现错误，详细的错误内容为\n" + str(e),"导入错误",True)
-
 
         # 触摸屏滑动适配
         scroll = self.home.findChild(SmoothScrollArea, 'sd_scroll')
@@ -1185,8 +1218,8 @@ class MainWindow(FluentWindow):
         QScroller.grabGesture(scroll.viewport(), QScroller.LeftMouseButtonGesture)
         scroll = self.adjustment.findChild(SmoothScrollArea, 'sd_scroll')
         QScroller.grabGesture(scroll.viewport(), QScroller.LeftMouseButtonGesture)
-
-
+        scroll = self.dsc.findChild(SmoothScrollArea, 'sd_scroll')
+        QScroller.grabGesture(scroll.viewport(), QScroller.LeftMouseButtonGesture)
 
         #self.myButton = self.home.findChild(SwitchButton, 'CW2_onof_button')
         #print(self.myButton)
@@ -1204,6 +1237,7 @@ class MainWindow(FluentWindow):
         self.set_soft()
         self.set_display()
         self.set_Adjustment()
+        self.set_dsc()
 
         #self.stackedWidget.currentChanged.connect(lambda: print(self.stackedWidget.currentWidget()))
 
@@ -1560,6 +1594,10 @@ class MainWindow(FluentWindow):
         self.update_button = self.soft.findChild(SwitchButton, 'update_button')
         self.info_button = self.soft.findChild(SwitchButton, 'info_button')
         self.check_net_button = self.soft.findChild(SwitchButton, 'check_net_button')
+        self.set_openwidgets_button = self.soft.findChild(PushButton, 'set_openwidgets_button')
+
+
+        self.set_openwidgets_button.clicked.connect(lambda:self.inex("open_Profile"))
 
 
         if config.get("check_update") == "True":
@@ -1579,6 +1617,7 @@ class MainWindow(FluentWindow):
         else:
             self.check_net_button.setChecked(False)
         self.check_net_button.checkedChanged.connect(lambda value: self.update_dp(value,'check_net'))
+
     def set_info(self):
         #------设置关于页面的控件--------
         global Version, yun_version
@@ -1929,6 +1968,145 @@ class MainWindow(FluentWindow):
         #self.adj_Combobox.setPlaceholderText("请选择调整的星期")# 设置提示文本
         self.adj_Combobox.currentIndexChanged.connect(self.adj_week_changed)
 
+    def set_dsc(self):
+        global desk_short
+        self.sort_verticalLayout = self.dsc.findChild(QVBoxLayout, 'sort_verticalLayout')
+        self.sorter = HorizontalSortWidget()
+
+        self.dsc_Switch_button = self.dsc.findChild(SwitchButton, 'dsc_Switch_button')
+        self.default_dsc_xy_PushButton = self.dsc.findChild(PushButton, 'default_dsc_xy_PushButton')
+        self.dsc_lock_button = self.dsc.findChild(SwitchButton, 'dsc_lock_button')
+        self.dsc_put_button = self.dsc.findChild(SwitchButton, 'dsc_put_button')
+        self.dsc_Typeface_button = self.dsc.findChild(PushButton, 'dsc_Typeface_button')
+        self.default_dsc_font_PushButton = self.dsc.findChild(PushButton, 'default_dsc_font_PushButton')
+        self.dsc_Color_button = self.dsc.findChild(PushButton, 'dsc_Color_button')
+        self.dsc_short_LineEdit = self.dsc.findChild(LineEdit, 'dsc_short_LineEdit')
+        self.dsc_short_button = self.dsc.findChild(PushButton, 'dsc_short_button')
+        self.dsc_addexe_button = self.dsc.findChild(PushButton, 'dsc_addexe_button')
+        self.dsc_MoveTeacherFile_button = self.dsc.findChild(PushButton, 'dsc_MoveTeacherFile_button')
+        self.dsc_tran_Slider = self.dsc.findChild(Slider, 'dsc_tran_Slider')
+        self.dsc_tran_BodyLabel = self.dsc.findChild(BodyLabel, 'dsc_tran_BodyLabel')
+        self.dsc_update_short_button = self.dsc.findChild(PushButton, 'dsc_update_short_button')
+        self.dsc_halo_button = self.dsc.findChild(SwitchButton, 'dsc_halo_button')
+        self.dsc_length_BodyLabel = self.dsc.findChild(BodyLabel, 'dsc_length_BodyLabel')
+        self.dsc_length_Slider = self.dsc.findChild(Slider, 'dsc_length_Slider')
+
+
+
+
+        if config.get("dsc_Switch") == "True":
+            self.dsc_Switch_button.setChecked(True)
+        else:
+            self.dsc_Switch_button.setChecked(False)
+                
+            # 禁用按钮
+            controls = [
+                self.dsc_lock_button,
+                self.default_dsc_xy_PushButton,
+                self.dsc_Typeface_button,
+                self.default_dsc_font_PushButton,
+                self.dsc_put_button,
+                self.dsc_Color_button,
+                self.dsc_tran_Slider,
+                self.dsc_short_button,
+                self.dsc_addexe_button,
+                self.dsc_update_short_button,
+                self.dsc_MoveTeacherFile_button,
+                self.dsc_halo_button,
+                self.dsc_length_Slider,
+                self.dsc_length_BodyLabel
+
+            ]
+            for control in controls:
+                control.setDisabled(True)
+
+        if config.get("dsc_lock") == "True":
+            self.dsc_lock_button.setChecked(True)
+        else:
+            self.dsc_lock_button.setChecked(False)
+
+        if config.get("dsc_put") == "True":
+            self.dsc_put_button.setChecked(True)
+        else:
+            self.dsc_put_button.setChecked(False)
+
+        if config.get("dsc_halo_switch") == "True":
+            self.dsc_halo_button.setChecked(True)
+        else:
+            self.dsc_halo_button.setChecked(False)
+
+
+        self.dsc_tran_Slider.setValue(int(config.get("dsc_tran")))
+        self.dsc_tran_BodyLabel.setText(config.get("dsc_tran"))  
+        self.dsc_length_Slider.setMaximum(display_x)
+        if config.get("dsc_length") == "None":
+            self.dsc_length_Slider.setValue(display_x / 2)
+            self.dsc_length_BodyLabel.setText(str(display_x/2))
+        else:
+            self.dsc_length_Slider.setValue(int(config.get("dsc_length")))
+            self.dsc_length_BodyLabel.setText(config.get("dsc_length"))
+      
+        
+        self.dsc_lock_button.checkedChanged.connect(lambda value: self.CH.handle_config(str(value),'dsc_lock'))
+        self.dsc_Switch_button.checkedChanged.connect(lambda value: self.CH.handle_config(str(value),'dsc_Switch'))
+        self.default_dsc_xy_PushButton.clicked.connect(lambda: self.CH.handle_config(None, 'default_dsc_xy'))
+        self.dsc_Typeface_button.clicked.connect(self.choose_font_dsc)
+        self.default_dsc_font_PushButton.clicked.connect(lambda: self.CH.handle_config(None, 'default_dsc_font'))
+        self.dsc_put_button.checkedChanged.connect(lambda value: self.CH.handle_config(value, 'dsc_put'))
+        self.dsc_Color_button.clicked.connect(self.choose_color_dsc)
+        self.dsc_tran_Slider.valueChanged.connect(lambda value: self.CH.handle_config(value, 'dsc_tran'))
+        self.dsc_short_button.clicked.connect(self.dsc_addshort)
+        self.dsc_addexe_button.clicked.connect(self.addexe.show)
+        self.dsc_update_short_button.clicked.connect(self.update_dsc_sorter)
+        self.dsc_MoveTeacherFile_button.clicked.connect(desk_short.changeTeacherFilesPath)
+        self.dsc_halo_button.checkedChanged.connect(lambda value: self.CH.handle_config(str(value),'dsc_halo_switch'))
+        self.dsc_length_Slider.valueChanged.connect(lambda value: self.CH.handle_config(str(value), 'dsc_length'))
+
+
+
+        shurt_data = desk_short.get_current_state()
+        # 按当前显示顺序提取快捷方式（保持原有顺序）
+        current_order_shortcuts = shurt_data['shortcuts']
+        # 将当前顺序的快捷方式名称添加到排序组件
+        self.sorter.addItems([item['name'] for item in current_order_shortcuts])
+        # 存储名称到临时编号的映射，用于后续应用排序
+        self.shortcut_temp_id_map = {item['name']: item['temp_id'] for item in current_order_shortcuts}
+        self.sorter.orderChanged.connect(self.update_dsc_order)
+        self.sort_verticalLayout.addWidget(self.sorter)
+
+    def update_dsc_order(self, new_order):
+        global desk_short
+        try:
+            sorted_temp_ids = [
+            self.shortcut_temp_id_map[name] 
+            for name in new_order ]
+            #if name in self.shortcut_temp_id_map]  # 只处理存在的名称
+
+            success = desk_short.sort_shortcuts(sorted_temp_ids)
+            #if success:
+            #    shortcut_id = {item['name']: item['temp_id'] for item in (desk_short.get_current_state()['shortcuts'])}
+            #    #print(f"排序成功，编号顺序: {sorted_temp_ids},\n真实排序：{shortcut_id}")
+            #else:
+            #    print("排序失败")
+        except Exception as e:
+            print(f"处理排序时发生错误: {str(e)}")
+    def update_dsc_sorter(self):
+        global desk_short
+        try:
+            shurt_data = desk_short.get_current_state()
+            # 按当前显示顺序提取快捷方式（保持原有顺序）
+            current_order_shortcuts = shurt_data['shortcuts']
+            # 将当前顺序的快捷方式名称添加到排序组件
+            self.sorter.clear()
+            self.sorter.addItems([item['name'] for item in current_order_shortcuts])
+            # 存储名称到临时编号的映射，用于后续应用排序
+            self.shortcut_temp_id_map = {item['name']: item['temp_id'] for item in current_order_shortcuts}
+            self.dsc_update_short_button.setText("成功!")
+            QTimer.singleShot(1000, lambda: self.dsc_update_short_button.setText("刷新列表"))
+        except Exception as e:
+            main.logger.error("更新排序组件时发生错误:\n" + str(e))
+            self.dsc_update_short_button.setText("失败!")
+            QTimer.singleShot(1000, lambda: self.dsc_update_short_button.setText("刷新列表"))
 
     @pyqtSlot(str, str, str)
     def update_ui_with_check_result(self, current_cloud_version, check_type, update_status):
@@ -2592,6 +2770,18 @@ class MainWindow(FluentWindow):
         if ok:
             self.update_dp(font.family(),'dp_Typeface')
             config['dp_Typeface'] = font.family()
+    def choose_font_dsc(self):
+        font, ok = QFontDialog.getFont(self)
+        if ok:
+            self.CH.handle_config(str(font.family()),'dsc_Typeface')
+            self.CH.handle_config(str(font.pointSize()),'dsc_Typeface_size')
+            desk_short.handle_update('Typeface', font)
+    def choose_color_dsc(self):
+        color = QColorDialog.getColor()
+        if color.isValid():
+            #config['dsc_Color'] = color.name()
+            self.CH.handle_config(color.name(),'dsc_Color')
+            #desk_short.handle_update('Color', color)
     def count_font(self):
         font, ok = QFontDialog.getFont(self)
         if ok:
@@ -2614,6 +2804,31 @@ class MainWindow(FluentWindow):
             self.error(str(e))
         
         self.error("需要重启才可以使更改生效。","提示",False,False)
+    def dsc_addshort(self):
+        text = self.dsc_short_LineEdit.text()
+        if text == "":
+            self.error("请输入快捷方式名称","警告",False,True)
+            return
+        shurt_name = [item['name'] for item in desk_short.get_current_state()['shortcuts']]
+        if text in shurt_name:
+            self.error("快捷方式已存在","警告",False,True)
+            return
+        desk_short.addNewFolderShortcut(text)
+        self.dsc_short_LineEdit.clear()
+    def dsc_add_exe_shortcut(self):
+        text = self.dsc_short_LineEdit.text()
+        if text == "":
+            self.error("请输入快捷方式名称","警告",False,True)
+            return
+        shurt_name = [item['name'] for item in desk_short.get_current_state()['shortcuts']]
+        if text in shurt_name:
+            self.error("快捷方式已存在","警告",False,True)
+            return
+        file_path, _ = QFileDialog.getOpenFileName(self, "选择可执行文件", "", "Executable Files (*.exe);;All Files (*)")
+        if file_path:
+            desk_short.addNewExeShortcut(text,file_path)
+            self.dsc_short_LineEdit.clear()
+
     def update_dp(self,value,choose):
         if choose == "dp_widgets":
             DP_Comonent.lingyun_down.setText("--:--")
@@ -3216,7 +3431,8 @@ class MainWindow(FluentWindow):
             # 打开注册表项，为当前用户设置开机启动
             key = reg.OpenKey(reg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Run", 0, reg.KEY_SET_VALUE)
             # 设置程序开机启动
-            program_path = remove_last_folder(script_dir)
+            program_path = f'"{script_full_path}"' # remove_last_folder(script_dir)
+            print(f"设置开机启动路径: {program_path}")
             if zt:
                 reg.SetValueEx(key, program_name, 0, reg.REG_SZ, program_path)
             else:
@@ -3603,6 +3819,8 @@ class MainWindow(FluentWindow):
                     self.Flyout(title="提示",content=f"导出成功！\n已保存在{file_path}。",target=self.dp_export_button)
         elif value == "openwidgets":
             os.startfile(f'{USER_RES}jsons')
+        elif value == "open_Profile":
+            os.startfile(USER_RES)
         elif value == "dp_widgets":
             self.error("重启软件后生效。","提示",False,False)
         elif value == "exescs":
@@ -5559,6 +5777,229 @@ class SystemTrayMenus(SystemTrayMenu):
 
         QTimer.singleShot(500, lambda: QApplication.quit())
 
+# 配置信息值处理
+class ly_ConfigHandler(ConfigHandler):
+    def setup_mappings(self):
+        super().setup_mappings()
+        # 配置映射关系
+        self.mappings["handlers"]["default_dsc_xy"] = self._handle_reset_dsc_xy  # 绑定到处理函数
+        self.mappings["immediate_returns"].add("default_dsc_xy")  # 标记为立即返回
+        self.mappings["handlers"]["dsc_Switch"] = self._dsc_Switch
+        self.mappings['handlers']['dsc_lock'] = self._dsc_lock
+        self.mappings["handlers"]["dsc_Typeface"] = self._dsc_Typeface
+        self.mappings["handlers"]["dsc_Typeface_size"] = self._dsc_Typeface_size
+        self.mappings["handlers"]["default_dsc_font"] = self._handle_reset_dsc_font
+        self.mappings["immediate_returns"].add("default_dsc_font")
+        self.mappings["handlers"]["dsc_put"] = self._dsc_put
+        self.mappings["handlers"]["dsc_Color"] = self._dsc_Color
+        self.mappings["handlers"]["dsc_tran"] = self._dsc_tran
+        self.mappings["handlers"]["dsc_halo_switch"] = self._dsc_halo
+        self.mappings["handlers"]["dsc_length"] = self._dsc_length
+
+    
+    # 具体处理函数
+    def _handle_reset_dsc_xy(self):
+        """处理dsc_x和dsc_y的重置逻辑"""
+
+        # 1. 写入注册表：将dsc_x和dsc_y设为-1
+        registry_key = reg.CreateKey(reg.HKEY_CURRENT_USER, self.registry_path)
+        
+        reg.SetValueEx(registry_key, "dsc_x", 0, reg.REG_SZ, "-1")
+        reg.SetValueEx(registry_key, "dsc_y", 0, reg.REG_SZ, "-1")
+        reg.CloseKey(registry_key)        
+        self.config["dsc_x"] = "-1"        
+        self.config["dsc_y"] = "-1"
+        
+        # 2. 通知Desktop_shortcut_component
+        desk_short.handle_update("default_xy")
+    
+    def _dsc_Switch(self,value):
+        """处理dsc_Switch的逻辑"""
+        config["dsc_Switch"] = str(value)
+        desk_short.handle_update("switch",value)
+        controls = [
+                settings_window.dsc_lock_button,
+                settings_window.default_dsc_xy_PushButton,
+                settings_window.dsc_Typeface_button,
+                settings_window.default_dsc_font_PushButton,
+                settings_window.dsc_put_button,
+                settings_window.dsc_Color_button,
+                settings_window.dsc_tran_Slider,
+                settings_window.dsc_short_button,
+                settings_window.dsc_addexe_button,
+                settings_window.dsc_update_short_button,
+                settings_window.dsc_MoveTeacherFile_button
+            ]
+        if value == "False":
+            for control in controls:
+                if control is not None:
+                    control.setDisabled(True)
+        else:
+            for control in controls:
+                if control is not None:
+                    control.setEnabled(True)
+
+    def _dsc_lock(self,value=None):
+        """处理dsc_lock的逻辑"""
+        config["dsc_lock"] = str(value)
+        desk_short.handle_update("lock",value)
+
+    def _dsc_Typeface(self,value):
+        """处理dsc_Typeface的逻辑"""
+        config["dsc_Typeface"] = str(value)
+
+    def _dsc_Typeface_size(self,value):
+        """处理dsc_Typeface_size的逻辑"""
+        config["dsc_Typeface_size"] = str(value)
+
+    def _handle_reset_dsc_font(self):
+        """处理dsc_font的重置逻辑"""
+        # 1. 写入注册表：将dsc_font设为默认值
+        registry_key = reg.CreateKey(reg.HKEY_CURRENT_USER, self.registry_path)
+        
+        # 写入dsc_font
+        reg.SetValueEx(registry_key, "dsc_Typeface", 0, reg.REG_SZ, "")
+        reg.SetValueEx(registry_key, "dsc_Typeface_size", 0, reg.REG_SZ, "15")
+        reg.CloseKey(registry_key)
+        config["dsc_Typeface"] = ""
+        config["dsc_Typeface_size"] = "15"
+
+        
+        # 2. 通知Desktop_shortcut_component 
+        desk_short.handle_update("default_font")
+
+    def _dsc_put(self,value):
+        """处理dsc_put的逻辑"""
+        config["dsc_put"] = str(value)
+        QTimer.singleShot(100, lambda: desk_short.handle_update("put",value))
+        
+    def _dsc_Color(self,value):
+        config["dsc_Color"] = str(value)
+        desk_short.handle_update("color",value)
+
+    def _dsc_tran(self,value):
+        config["dsc_tran"] = str(value)
+        desk_short.handle_update("tran",value)
+        settings_window.dsc_tran_BodyLabel.setText(f"{value}")
+
+    def _dsc_halo(self,value):
+        config["dsc_halo_switch"] = str(value)
+        desk_short.handle_update("halo",value)
+
+    def _dsc_length(self,value):
+        config["dsc_length"] = str(value)
+        settings_window.dsc_length_BodyLabel.setText(value)        
+        desk_short.handle_update("length",value)
+
+
+
+class AddNewExeDialog(QWidget):
+    """添加新的EXE快捷方式对话框"""
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.initUI()
+        # 用于窗口拖动
+        self.dragging = False
+        self.offset = QPoint()
+    def initUI(self):
+        
+        self.setWindowTitle("添加新的EXE快捷方式")
+        self.setGeometry(display_x / 2 - 200, display_y / 2 - 100, 400, 200)
+        # 设置窗口属性 - 去掉标题栏
+        self.setWindowFlags(Qt.WindowMaximizeButtonHint | Qt.MSWindowsFixedSizeDialogHint)
+        self.setWindowIcon(QIcon(f'{RES}ico/LINGYUN.ico'))
+        # 创建主布局
+        main_layout = QVBoxLayout()
+        main_layout.setContentsMargins(20, 20, 20, 20)  # 内边距
+        self.setLayout(main_layout)
+
+        # EXE文件选择
+        exe_layout = QHBoxLayout()
+        icon_layout = QHBoxLayout()
+
+        self.exe_path_input = LineEdit(self)
+        self.exe_path_input.setPlaceholderText("选择EXE文件...")
+        self.exe_path_button = PushButton("浏览", self)
+        self.exe_path_button.clicked.connect(self.browse_exe_file)
+        exe_layout.addWidget(self.exe_path_input)
+        exe_layout.addWidget(self.exe_path_button)
+        main_layout.addLayout(exe_layout)
+        
+        self.default_name = LineEdit(self)
+        self.default_name.setPlaceholderText("默认快捷方式名称（可先选择exe文件）...")
+        main_layout.addWidget(self.default_name)
+
+        # 图标选择
+        self.icon_path_input = LineEdit(self)
+        self.icon_path_input.setPlaceholderText("选择图标文件...")
+        self.icon_path_button = PushButton("浏览", self)
+        self.icon_path_button.clicked.connect(self.browse_icon_file)
+        icon_layout.addWidget(self.icon_path_input)        
+        icon_layout.addWidget(self.icon_path_button)
+        main_layout.addLayout(icon_layout)
+
+        tip_label = BodyLabel("暂不支持自动提取图标文件，敬请谅解。")
+        main_layout.addWidget(tip_label)    
+
+        # 按钮
+        button_layout = QHBoxLayout()
+        add_button = PushButton("添加", self)
+        add_button.clicked.connect(self.accept)
+        cancel_button = PushButton("取消", self)
+        cancel_button.clicked.connect(self.reject)
+        button_layout.addWidget(add_button)
+        button_layout.addWidget(cancel_button)
+        main_layout.addLayout(button_layout)
+
+
+
+    def browse_exe_file(self):
+        """浏览并选择EXE文件"""
+        options = QFileDialog.Options()
+        options |= QFileDialog.ReadOnly
+        file_path, _ = QFileDialog.getOpenFileName(self, "选择EXE文件", "", "exe应用程序(*.exe);;所有文件(*)", options=options)
+        if file_path:
+            self.exe_path_input.setText(file_path)
+            # 自动设置图标路径为同目录下的icon.ico（如果存在）
+            icon_path = os.path.splitext(file_path)[0] + '.ico'
+            if os.path.isfile(icon_path):
+                self.icon_path_input.setText(icon_path)
+            self.default_name.setText(os.path.splitext(os.path.basename(file_path))[0])
+
+    def browse_icon_file(self):
+        """浏览并选择图标文件"""
+        options = QFileDialog.Options()
+        options |= QFileDialog.ReadOnly
+        file_path, _ = QFileDialog.getOpenFileName(self, "选择图标文件", "", "图像文件 (*.png *.jpg *.jpeg *.bmp *.ico);;所有文件 (*)", options=options)
+        if file_path:
+            self.icon_path_input.setText(file_path)
+
+    def accept(self):
+        """确认添加快捷方式"""
+        exe_path = self.exe_path_input.text().strip()
+        icon_path = self.icon_path_input.text().strip()
+        
+        if not exe_path or not os.path.isfile(exe_path) or not exe_path.endswith('.exe'):
+            QMessageBox.warning(self, "无效选择", "请选择有效的EXE文件")
+            return
+
+        if not icon_path or not os.path.isfile(icon_path):
+            QMessageBox.warning(self, "无效图标", "请选择有效的图像文件作为图标")
+            return
+        
+        desk_short.addNewExeShortcut(exe_path, icon_path, self.default_name.text())
+
+        self.hide()
+        self.exe_path_input.clear()
+        self.icon_path_input.clear()
+        self.default_name.clear()
+
+    def reject(self):
+        self.hide()
+        self.exe_path_input.clear()
+        self.icon_path_input.clear()
+        self.default_name.clear()
+
 
 
 # 云获取提醒
@@ -5672,8 +6113,6 @@ def restart_program():
     # 给动画足够的时间完成
     QTimer.singleShot(500, perform_restart)
 
-
-
 # 检查多开（暂时不用）
 def is_program_running():
     pid_file = '/tmp/LingYun.pid'
@@ -5758,6 +6197,7 @@ if __name__ == '__main__':
     CLSCTX_SERVER = CLSCTX_INPROC_SERVER | CLSCTX_LOCAL_SERVER | CLSCTX_REMOTE_SERVER
     CLSCTX_ALL = CLSCTX_INPROC_HANDLER | CLSCTX_SERVER
     app = QApplication(sys.argv)
+    app.setStyle("Fusion")
 
     arg = get_argument()
     '''
