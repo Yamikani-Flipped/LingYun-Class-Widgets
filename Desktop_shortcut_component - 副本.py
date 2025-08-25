@@ -1,10 +1,10 @@
 import sys, os, json, shutil, warnings, ctypes, winreg as reg
 from ctypes import wintypes
-from PyQt5.QtWidgets import (QApplication, QWidget, QHBoxLayout, QVBoxLayout, QDialog,QProgressBar,QGraphicsDropShadowEffect,
+from PyQt5.QtWidgets import (QApplication, QWidget, QHBoxLayout, QVBoxLayout, QDialog,QProgressBar,
                             QLabel, QPushButton, QScrollArea, QFileDialog, QMessageBox,QComboBox,QLineEdit,
                             QMenu, QAction, QInputDialog, QLayout, QGraphicsOpacityEffect, QListWidget, QListWidgetItem)
 from PyQt5.QtGui import QIcon, QPixmap, QConicalGradient, QLinearGradient, QPainter, QColor, QFont, QBrush, QPen, QPainterPath, QTransform
-from PyQt5.QtCore import Qt, QPoint, QPropertyAnimation, QEasingCurve, QProcess, QSize, QByteArray, pyqtProperty, pyqtSignal, QTimer, QThread,QEventLoop
+from PyQt5.QtCore import Qt, QPoint, QPropertyAnimation, QEasingCurve, QProcess, QSize, QByteArray, pyqtProperty, pyqtSignal, QTimer, QThread
 import uuid
 import subprocess
 import re, time
@@ -30,7 +30,6 @@ def getDocPath(pathID=5):
 USER_RES = os.path.join(getDocPath(), "LingYun_Profile")
 TEACHER_FILES = os.path.join(USER_RES, "教师文件")
 CONFIG_PATH = os.path.join(USER_RES, "shortcut_config.json")
-SYSTEM_ICON_PATH = os.path.join("Resource", "System_Icons")
 
 # 确保基础文件夹存在
 os.makedirs(TEACHER_FILES, exist_ok=True)
@@ -52,7 +51,6 @@ class ShortcutItem(QWidget):
         self.is_uwp = is_uwp  # 标识是否为UWP应用
         self.icon_path = icon_path  # 自定义图标路径
         self.is_separator = is_separator  # 标识是否为分割线
-        self.is_system = path.startswith("::{")
         self.icon_size = 64  # 图标尺寸
         self.max_text_length = 16  # 最大文字长度
         self.parent_widget = parent  # 保存父窗口引用
@@ -395,11 +393,11 @@ class ShortcutItem(QWidget):
         
         # 在左侧添加分割线
         add_separator_left = QAction("在左侧添加分割线", self)
-        add_separator_left.triggered.connect(lambda: self.addSeparators("left"))
+        add_separator_left.triggered.connect(lambda: self.addSeparator("left"))
         
         # 在右侧添加分割线
         add_separator_right = QAction("在右侧添加分割线", self)
-        add_separator_right.triggered.connect(lambda: self.addSeparators("right"))
+        add_separator_right.triggered.connect(lambda: self.addSeparator("right"))
         
         menu.addSeparator()
         
@@ -571,7 +569,7 @@ class ShortcutItem(QWidget):
         else:
             super().mousePressEvent(event)
 
-    def addSeparators(self, position):
+    def addSeparator(self, position):
         """添加快捷方式分割线"""
         if hasattr(self.parent_widget, 'addSeparator'):
             self.parent_widget.addSeparator(self, position)
@@ -1499,8 +1497,8 @@ class ShortcutManager(QWidget):
 
             save_shortcut_order(self.shortcuts)
             
-            # 如果是文件夹快捷方式，询问是否删除实际文件夹 teacher_file 
-            if not shortcut.is_exe and not shortcut.is_uwp and not shortcut.is_separator and not shortcut.is_system:
+            # 如果是文件夹快捷方式，询问是否删除实际文件夹
+            if not shortcut.is_exe and not shortcut.is_uwp and not shortcut.is_separator:
                 reply = QMessageBox.question(
                     self, "删除文件夹", 
                     f"是否同时删除实际文件夹 '{shortcut.path}'?",
@@ -2726,34 +2724,6 @@ class SystemShortcutItem(ShortcutItem):
         self.is_system = True
         self.system_type = self.getSystemType(name)
         
-        # 设置系统图标
-        self.setSystemIcon()
-        
-    def setSystemIcon(self):
-        """根据系统类型设置对应的图标"""
-        icon_name = None
-        
-        if self.system_type == "computer":
-            icon_name = "IDI_COMPUTER.ico"
-        elif self.system_type == "recycle":
-            # 回收站根据状态选择图标
-            if self.isRecycleBinEmpty():
-                icon_name = "IDI_RECYCLE_EMPTY.ico"
-            else:
-                icon_name = "IDI_RECYCLE_FULL.ico"
-        elif self.system_type == "control_panel":
-            icon_name = "IDI_CONTROL_PANEL.ico"
-        elif self.system_type == "network":
-            icon_name = "IDI_NETWORK.ico"
-        elif self.system_type == "desktop":
-            icon_name = "IDI_DESKTOP.ico"
-        
-        if icon_name:
-            icon_path = os.path.join(SYSTEM_ICON_PATH, icon_name)
-            if os.path.exists(icon_path):
-                self.icon_path = icon_path
-                self.updateIcon()
-    
     def getSystemType(self, name):
         """根据名称确定系统类型"""
         if name == "此电脑":
@@ -2818,15 +2788,16 @@ class SystemShortcutItem(ShortcutItem):
                 empty_action.setEnabled(False)  # 禁用菜单项
                 menu.addAction(empty_action)
             
-            #properties_action = QAction("属性", self)
-            #properties_action.triggered.connect(self.openRecycleProperties)
+            properties_action = QAction("属性", self)
+            properties_action.triggered.connect(self.openRecycleProperties)
             
             menu.addAction(open_action)
             menu.addAction(empty_action)
-            #menu.addAction(properties_action)
+            menu.addAction(properties_action)
             
         elif self.system_type == "control_panel":
             menu.addAction(open_action)
+            
         else:
             menu.addAction(open_action)
         
@@ -2835,28 +2806,10 @@ class SystemShortcutItem(ShortcutItem):
         # 删除动作
         delete_action = QAction("删除快捷方式", self)
         delete_action.triggered.connect(self.deleteShortcut)
-
-        # 分割线
-        add_separator_left = QAction("在左侧添加分割线", self)
-        add_separator_left.triggered.connect(lambda: self.addSeparators("left"))
-        add_separator_right = QAction("在右侧添加分割线", self)
-        add_separator_right.triggered.connect(lambda: self.addSeparators("right"))
         
-        menu.addAction(add_separator_left)
-        menu.addAction(add_separator_right)  
-
-        menu.addSeparator()
-
         menu.addAction(delete_action)
-
-
         
         menu.exec_(self.mapToGlobal(position))
-
-    def addSeparators(self, position):
-        """在指定快捷方式的上方或下方添加分割线"""
-        if hasattr(self.parent_widget, 'addSeparator'):
-            self.parent_widget.addSeparator(self, position)
 
     def isRecycleBinEmpty(self):
         """检查回收站是否为空 - 修复版本"""
@@ -2952,9 +2905,6 @@ class SystemShortcutItem(ShortcutItem):
             from ctypes import windll
             windll.shell32.SHEmptyRecycleBinW(None, None, 0)
             #QMessageBox.information(self, "成功", "回收站已清空")
-            
-            # 清空后更新回收站图标
-            self.setSystemIcon()
         except Exception as e:
             QMessageBox.warning(self, "清空失败", f"无法清空回收站: {str(e)}")
     
@@ -2965,323 +2915,8 @@ class SystemShortcutItem(ShortcutItem):
             subprocess.Popen('rundll32.exe shell32.dll,Control_RunDLL ::{645FF040-5081-101B-9F08-00AA002F954E}', shell=True)
         except Exception as e:
             QMessageBox.warning(self, "打开失败", f"无法打开回收站属性: {str(e)}")
-    
-    def openTarget(self):
-        """重写打开目标方法，对于回收站需要先检查状态"""
-        if self.system_type == "recycle":
-            # 打开前先更新图标状态
-            self.setSystemIcon()
-        super().openTarget()
 
-class ModernDialog(QWidget):
-    """现代化对话框组件，模仿Win11系统更新提示框风格"""
-    
-    # 按钮类型常量
-    BUTTON_OK = 1
-    BUTTON_CANCEL = 2
-    BUTTON_YES = 4
-    BUTTON_NO = 8
-    BUTTON_CLOSE = 16
-    
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)
-        self.setAttribute(Qt.WA_TranslucentBackground)
-        self.setFixedSize(400, 280)
-        
-        self.buttons = 0
-        self.result = None
-        self.initUI()
-        
-    def initUI(self):
-        # 主容器
-        self.container = QWidget(self)
-        self.container.setGeometry(0, 0, 400, 280)
-        self.container.setStyleSheet("""
-            QWidget {
-                background-color: #f8f9fa;
-                border-radius: 8px;
-                border: 1px solid #e1e5e9;
-            }
-        """)
-        
-        # 标题栏
-        self.title_bar = QWidget(self.container)
-        self.title_bar.setGeometry(0, 0, 400, 40)
-        self.title_bar.setStyleSheet("""
-            QWidget {
-                background-color: #ffffff;
-                border-top-left-radius: 8px;
-                border-top-right-radius: 8px;
-                border-bottom: 1px solid #e1e5e9;
-            }
-        """)
-        
-        # 标题
-        self.title_label = QLabel("提示", self.title_bar)
-        self.title_label.setGeometry(20, 0, 300, 40)
-        self.title_label.setStyleSheet("""
-            QLabel {
-                color: #201f1e;
-                font-size: 14px;
-                font-weight: 600;
-            }
-        """)
-        
-        # 关闭按钮
-        self.close_btn = QPushButton("×", self.title_bar)
-        self.close_btn.setGeometry(360, 0, 40, 40)
-        self.close_btn.setStyleSheet("""
-            QPushButton {
-                background-color: transparent;
-                border: none;
-                color: #605e5c;
-                font-size: 18px;
-                font-weight: 400;
-            }
-            QPushButton:hover {
-                background-color: #f3f2f1;
-                color: #201f1e;
-            }
-            QPushButton:pressed {
-                background-color: #edebe9;
-            }
-        """)
-        self.close_btn.clicked.connect(self.reject)
-        
-        # 图标
-        self.icon_label = QLabel(self.container)
-        self.icon_label.setGeometry(20, 60, 48, 48)
-        self.icon_label.setAlignment(Qt.AlignCenter)
-        
-        # 消息内容
-        self.message_label = QLabel(self.container)
-        self.message_label.setGeometry(80, 60, 300, 100)
-        self.message_label.setWordWrap(True)
-        self.message_label.setStyleSheet("""
-            QLabel {
-                color: #323130;
-                font-size: 13px;
-                line-height: 1.4;
-            }
-        """)
-        
-        # 按钮容器
-        self.button_container = QWidget(self.container)
-        self.button_container.setGeometry(0, 180, 400, 60)
-        self.button_container.setStyleSheet("""
-            QWidget {
-                background-color: #f8f9fa;
-                border-bottom-left-radius: 8px;
-                border-bottom-right-radius: 8px;
-            }
-        """)
-        
-        # 阴影效果
-        self.setGraphicsEffect(self.createShadowEffect())
-        
-    def createShadowEffect(self):
-        """创建阴影效果"""
-        shadow = QGraphicsDropShadowEffect(self)
-        shadow.setBlurRadius(20)
-        shadow.setColor(QColor(0, 0, 0, 60))
-        shadow.setOffset(0, 4)
-        return shadow
-        
-    def setIcon(self, icon_type):
-        """设置图标类型"""
-        icon_map = {
-            QMessageBox.Information: "💡",
-            QMessageBox.Warning: "⚠️",
-            QMessageBox.Critical: "❌",
-            QMessageBox.Question: "❓"
-        }
-        icon_text = icon_map.get(icon_type, "💡")
-        
-        self.icon_label.setStyleSheet(f"""
-            QLabel {{
-                background-color: #f3f2f1;
-                border-radius: 24px;
-                font-size: 24px;
-                color: #0078d4;
-            }}
-        """)
-        self.icon_label.setText(icon_text)
-        
-    def setTitle(self, title):
-        """设置标题"""
-        self.title_label.setText(title)
-        
-    def setMessage(self, message):
-        """设置消息内容"""
-        self.message_label.setText(message)
-        
-    def setButtons(self, buttons):
-        """设置按钮类型"""
-        self.buttons = buttons
-        self.createButtons()
-        
-    def createButtons(self):
-        """创建按钮"""
-        # 清除现有按钮
-        for child in self.button_container.children():
-            if isinstance(child, QPushButton):
-                child.deleteLater()
-                
-        button_layout = QHBoxLayout(self.button_container)
-        button_layout.setContentsMargins(20, 10, 20, 10)
-        button_layout.setSpacing(8)
-        button_layout.addStretch()
-        
-        # 根据按钮类型创建按钮
-        buttons_to_create = []
-        
-        if self.buttons & self.BUTTON_OK:
-            buttons_to_create.append(("确定", self.accept))
-        if self.buttons & self.BUTTON_CANCEL:
-            buttons_to_create.append(("取消", self.reject))
-        if self.buttons & self.BUTTON_YES:
-            buttons_to_create.append(("是", lambda: self.setResult(QMessageBox.Yes)))
-        if self.buttons & self.BUTTON_NO:
-            buttons_to_create.append(("否", lambda: self.setResult(QMessageBox.No)))
-        if self.buttons & self.BUTTON_CLOSE:
-            buttons_to_create.append(("关闭", self.reject))
-            
-        # 如果没有按钮，默认添加确定按钮
-        if not buttons_to_create:
-            buttons_to_create.append(("确定", self.accept))
-            
-        # 创建按钮（从右到左）
-        for text, callback in reversed(buttons_to_create):
-            btn = QPushButton(text)
-            btn.setFixedSize(80, 32)
-            
-            # 主要按钮样式（最后一个按钮）
-            if text in ["确定", "是"] and len(buttons_to_create) > 1:
-                btn_style = """
-                    QPushButton {
-                        background-color: #0078d4;
-                        color: white;
-                        border: none;
-                        border-radius: 4px;
-                        font-size: 13px;
-                        font-weight: 500;
-                    }
-                    QPushButton:hover {
-                        background-color: #106ebe;
-                    }
-                    QPushButton:pressed {
-                        background-color: #005a9e;
-                    }
-                    QPushButton:disabled {
-                        background-color: #f3f2f1;
-                        color: #a19f9d;
-                    }
-                """
-            else:
-                # 次要按钮样式
-                btn_style = """
-                    QPushButton {
-                        background-color: transparent;
-                        color: #0078d4;
-                        border: 1px solid #8a8886;
-                        border-radius: 4px;
-                        font-size: 13px;
-                        font-weight: 500;
-                    }
-                    QPushButton:hover {
-                        background-color: #f3f2f1;
-                        border-color: #0078d4;
-                    }
-                    QPushButton:pressed {
-                        background-color: #edebe9;
-                    }
-                    QPushButton:disabled {
-                        color: #a19f9d;
-                        border-color: #a19f9d;
-                    }
-                """
-                
-            btn.setStyleSheet(btn_style)
-            btn.clicked.connect(callback)
-            button_layout.addWidget(btn)
-            
-        self.button_container.setLayout(button_layout)
-        
-    def setResult(self, result):
-        """设置对话框结果"""
-        self.result = result
-        self.accept()
-        
-    def accept(self):
-        """接受对话框"""
-        self.result = QMessageBox.Ok
-        self.hide()
-        
-    def reject(self):
-        """拒绝对话框"""
-        self.result = QMessageBox.Cancel
-        self.hide()
-        
-    def exec_(self):
-        """执行对话框（模态）"""
-        self.result = None
-        self.show()
-        
-        # 创建事件循环
-        loop = QEventLoop()
-        self.finished = loop.quit
-        loop.exec_()
-        
-        return self.result
-        
-    def information(parent, title, message, buttons=BUTTON_OK):
-        """信息对话框"""
-        dialog = ModernDialog(parent)
-        dialog.setTitle(title)
-        dialog.setMessage(message)
-        dialog.setIcon(QMessageBox.Information)
-        dialog.setButtons(buttons)
-        return dialog.exec_()
-        
-    def warning(parent, title, message, buttons=BUTTON_OK):
-        """警告对话框"""
-        dialog = ModernDialog(parent)
-        dialog.setTitle(title)
-        dialog.setMessage(message)
-        dialog.setIcon(QMessageBox.Warning)
-        dialog.setButtons(buttons)
-        return dialog.exec_()
-        
-    def critical(parent, title, message, buttons=BUTTON_OK):
-        """错误对话框"""
-        dialog = ModernDialog(parent)
-        dialog.setTitle(title)
-        dialog.setMessage(message)
-        dialog.setIcon(QMessageBox.Critical)
-        dialog.setButtons(buttons)
-        return dialog.exec_()
-        
-    def question(parent, title, message, buttons=BUTTON_YES | BUTTON_NO):
-        """问题对话框"""
-        dialog = ModernDialog(parent)
-        dialog.setTitle(title)
-        dialog.setMessage(message)
-        dialog.setIcon(QMessageBox.Question)
-        dialog.setButtons(buttons)
-        return dialog.exec_()
-        
-    def mousePressEvent(self, event):
-        """支持拖动"""
-        if event.button() == Qt.LeftButton:
-            self.drag_start = event.globalPos() - self.frameGeometry().topLeft()
-            event.accept()
-            
-    def mouseMoveEvent(self, event):
-        """支持拖动"""
-        if event.buttons() == Qt.LeftButton and hasattr(self, 'drag_start'):
-            self.move(event.globalPos() - self.drag_start)
-            event.accept()
+
 
 
 def read_from_registry(value_name):
@@ -3465,6 +3100,8 @@ def is_admin():
     except:
         return False
     
+
+
 def extract_icon_with_key(file_path, icon_index, output_path):
     exe_path = r"Resource\tool\Extract.exe"
     # 调用程序（stdout=subprocess.PIPE捕获输出，stderr=subprocess.STDOUT合并错误输出）
@@ -3483,7 +3120,6 @@ def extract_icon_with_key(file_path, icon_index, output_path):
         "return_code": result.returncode,
         "output": result.stdout
     }
-
 
 
 ds_config = load_shortcut_order()

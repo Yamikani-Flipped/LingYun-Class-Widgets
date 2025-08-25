@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # very small
-import sys, os, logging, winreg as reg, webbrowser, warnings, json,threading,time,glob
+import sys, os, logging, winreg as reg, webbrowser, warnings, json,threading,time,uuid,glob
 from datetime import datetime,timedelta,date
 import traceback
 import shutil,zipfile,tempfile
@@ -25,7 +25,8 @@ from qfluentwidgets import (FluentWindow,FluentIcon,SubtitleLabel,Slider,Action,
     SystemThemeListener,isDarkTheme,CardWidget,TableWidget,setThemeColor,setTheme,SmoothScrollArea,TitleLabel,
     ProgressBar,StrongBodyLabel,MessageBox,Dialog,ListWidget,TextEdit,ComboBox,TimePicker,PrimaryPushButton,
     CalendarPicker,LineEdit,PasswordLineEdit,Flyout,FlyoutAnimationType,Theme,qconfig,RadioButton,HyperlinkButton,
-    ElevatedCardWidget,SegmentedWidget,IndeterminateProgressBar,InfoBar,ZhDatePicker)
+    ElevatedCardWidget,SegmentedWidget,IndeterminateProgressBar,InfoBar,ZhDatePicker)     
+
 
 # big
 from PyQt5 import uic
@@ -41,7 +42,7 @@ import subprocess
 
 
 warnings.filterwarnings("ignore", category=DeprecationWarning) # 忽略警告
-Version = '1.6.11'
+Version = '1.6.12'
 Version_Parse = version(Version)
 # 1.6.6以上版本修改为配置文件存电脑文档文件夹中
 #USER_RES = str(Path(__file__).resolve().parent.parent / "Resource").replace('\\', '/') + "/"
@@ -5745,9 +5746,10 @@ class SystemTrayMenus(SystemTrayMenu):
             self.black_screen_window.nest_window2()
 
     def setting_show(self):
-        global settings_window
+        global settings_window   
         # not hasattr(self, 'settings_window') 
         if 'settings_window' not in globals():
+
             settings_window = MainWindow()
             screen_geometry = QGuiApplication.primaryScreen().geometry()  # 获取屏幕的几何信息
             display_x = screen_geometry.width()  # 屏幕宽度
@@ -5926,7 +5928,7 @@ class AddNewExeDialog(QWidget):
         main_layout.addLayout(exe_layout)
         
         self.default_name = LineEdit(self)
-        self.default_name.setPlaceholderText("默认快捷方式名称（可先选择exe文件）...")
+        self.default_name.setPlaceholderText("默认快捷方式名称(先选择exe文件)...")
         main_layout.addWidget(self.default_name)
 
         # 图标选择
@@ -5937,9 +5939,11 @@ class AddNewExeDialog(QWidget):
         icon_layout.addWidget(self.icon_path_input)        
         icon_layout.addWidget(self.icon_path_button)
         main_layout.addLayout(icon_layout)
+        self.icon_path_input.hide()
+        self.icon_path_button.hide()
 
-        tip_label = BodyLabel("暂不支持自动提取图标文件，敬请谅解。")
-        main_layout.addWidget(tip_label)    
+        self.tip_label = BodyLabel("请先选择exe路径")
+        main_layout.addWidget(self.tip_label)    
 
         # 按钮
         button_layout = QHBoxLayout()
@@ -5961,9 +5965,17 @@ class AddNewExeDialog(QWidget):
         if file_path:
             self.exe_path_input.setText(file_path)
             # 自动设置图标路径为同目录下的icon.ico（如果存在）
-            icon_path = os.path.splitext(file_path)[0] + '.ico'
-            if os.path.isfile(icon_path):
-                self.icon_path_input.setText(icon_path)
+            temp_dir = os.path.join(USER_RES, "temp_icons")
+            os.makedirs(temp_dir, exist_ok=True)
+            temp_icon_path = os.path.join(temp_dir, f"{uuid.uuid4().hex}.ico")
+            if extract_icon_with_key(file_path,1,temp_icon_path):
+                self.icon_path_input.setText(temp_icon_path)
+                self.tip_label.setText("已自动提取该exe质量最佳图标")
+            else:
+                self.icon_path_input.clear()
+                self.icon_path_input.show()
+                self.icon_path_button.show()
+                self.tip_label.setText("图标提取失败，请手动选择")
             self.default_name.setText(os.path.splitext(os.path.basename(file_path))[0])
 
     def browse_icon_file(self):
@@ -6181,7 +6193,24 @@ def remove_last_folder(path_str,new_file_name="LingYun_Class_Widgets.exe"):
     
     return new_path
 
-
+def extract_icon_with_key(file_path, icon_index, output_path):
+    exe_path = r"Resource\tool\Extract.exe"
+    # 调用程序（stdout=subprocess.PIPE捕获输出，stderr=subprocess.STDOUT合并错误输出）
+    result = subprocess.run(
+        [exe_path, file_path, str(icon_index), output_path],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True  # 输出转为字符串
+    )
+    
+    # 返回值说明：
+    # result.returncode：程序退出码（0表示成功，其他为错误）
+    # result.stdout：程序输出的文本内容
+    return {
+        "success": result.returncode == 0,
+        "return_code": result.returncode,
+        "output": result.stdout
+    }
 
 
 if __name__ == '__main__':
@@ -6197,7 +6226,6 @@ if __name__ == '__main__':
     CLSCTX_SERVER = CLSCTX_INPROC_SERVER | CLSCTX_LOCAL_SERVER | CLSCTX_REMOTE_SERVER
     CLSCTX_ALL = CLSCTX_INPROC_HANDLER | CLSCTX_SERVER
     app = QApplication(sys.argv)
-    app.setStyle("Fusion")
 
     arg = get_argument()
     '''
