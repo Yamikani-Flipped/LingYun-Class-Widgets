@@ -103,6 +103,15 @@ class ShortcutItem(QWidget):
             font_family = "微软雅黑"
         self.text_label.setFont(QFont(font_family, int(font_size), QFont.Bold))
 
+        # 创建阴影效果
+        shadow = QGraphicsDropShadowEffect()
+        shadow.setColor(QColor(0, 0, 0, 255))  # 阴影颜色（RGBA）
+        shadow.setBlurRadius(10)  # 模糊半径，值越大越模糊
+        shadow.setOffset(0, 0)  # 偏移量(0,0)表示向四周展开
+        
+        # 应用阴影效果到标签
+        self.text_label.setGraphicsEffect(shadow)
+
         self.tip_label = QLabel("正在\n打开\n稍安勿躁", self)
         tip_font = QFont("微软雅黑", 25, QFont.Bold)
         self.tip_label.setFont(tip_font)

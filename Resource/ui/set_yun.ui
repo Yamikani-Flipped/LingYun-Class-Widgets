@@ -179,6 +179,13 @@
               </property>
              </widget>
             </item>
+            <item>
+             <widget class="PushButton" name="start_PushButton">
+              <property name="text">
+               <string>立即执行同步</string>
+              </property>
+             </widget>
+            </item>
            </layout>
           </widget>
          </item>
