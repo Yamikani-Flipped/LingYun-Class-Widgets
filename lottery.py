@@ -10,9 +10,10 @@ from PyQt5.QtWidgets import (QApplication, QWidget, QLabel, QPushButton,
 from PyQt5.QtGui import QFont, QColor, QPainter, QBrush, QPen, QRegion,QMouseEvent,QIcon
 from PyQt5.QtCore import Qt, QTimer, QPoint
 from PyQt5 import uic
-import ctypes
 from ctypes import wintypes, windll, create_unicode_buffer
 import json
+
+# closeEvent
 
 STUDENT_LIST = [
     "张三", "李四", "王五", "赵六", "钱七"
@@ -305,12 +306,10 @@ class LotteryWindow(QWidget):
 
     def closeEvent(self, event):
         # 忽略关闭事件，隐藏窗口
-        event.ignore()
         if self.running:
             print("抽签进行中，无法关闭窗口")
             return
         self.draw_btn.setText("瞧一瞧是哪位幸运儿")
-        self.hide()
 
 
 if __name__ == "__main__":

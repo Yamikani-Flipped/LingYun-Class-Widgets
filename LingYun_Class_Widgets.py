@@ -31,7 +31,7 @@ from qfluentwidgets import (FluentWindow,FluentIcon,SubtitleLabel,Slider,Action,
 
 # big
 from PyQt5 import uic
-from PyQt5.QtCore import pyqtProperty,  QTimer, QPropertyAnimation, QEasingCurve, Qt, QObject, pyqtSignal, pyqtSlot, QRect, QPoint, QEvent, QDate, QTime, QRectF, QThread, QDateTime,QRunnable, QThreadPool, pyqtSignal, QObject
+from PyQt5.QtCore import pyqtProperty,  QTimer, QPropertyAnimation, QEasingCurve, Qt, QObject, pyqtSignal, pyqtSlot, QRect, QPoint, QEvent, QDate, QTime, QRectF, QThread, QDateTime,QRunnable, QThreadPool, pyqtSignal, QObject, QSharedMemory
 from PyQt5.QtGui import QFontDatabase, QFont, QColor,QFontMetrics,QIcon,QPainter,QPainterPath,QCloseEvent,QGuiApplication,QRegion,QBrush
 from PyQt5.QtWidgets import QLabel, QWidget,QMainWindow, QScroller, QHBoxLayout, QButtonGroup, QSpacerItem,QFrame, QListWidgetItem, QMessageBox,QApplication,QFileDialog,QFontDialog,QSystemTrayIcon,QTableWidgetItem,QColorDialog,QStackedWidget,QVBoxLayout,QSizePolicy
 
@@ -42,8 +42,9 @@ from ctypes import byref, windll, c_ulong, c_bool, POINTER ,wintypes,create_unic
 import subprocess
 
 
+
 warnings.filterwarnings("ignore", category=DeprecationWarning) # 忽略警告
-Version = '1.6.13'
+Version = '1.6.15'
 Version_Parse = version(Version)
 # 1.6.6以上版本修改为配置文件存电脑文档文件夹中
 #USER_RES = str(Path(__file__).resolve().parent.parent / "Resource").replace('\\', '/') + "/"
@@ -53,6 +54,7 @@ def getDocPath(pathID=5):
     windll.shell32.SHGetFolderPathW(None, pathID, None, 0, buf)
     return buf.value
 USER_RES = getDocPath() + "/LingYun_Profile/"
+UNIQUE_KEY = "lingyun.studio.lingyunclasswidgets.singleinstance"
 RES = "Resource/"
 
 # 获取当前完整路径,获取当前文件名（os.path.basename(sys.argv[0]获得的是exe名字）
@@ -60,7 +62,15 @@ script_dir = sys.argv[0].replace(os.path.basename(sys.argv[0]),"")
 script_full_path = sys.argv[0]
 os.chdir(script_dir)# 切换工作目录QPropertyAnimation
 
+WM_QUERYENDSESSION = 0x0011
+WM_ENDSESSION = 0x0016
+SE_SHUTDOWN_NAME = "SeShutdownPrivilege"
+TOKEN_ADJUST_PRIVILEGES = 0x0020
+TOKEN_QUERY = 0x0008
+SE_PRIVILEGE_ENABLED = 0x0002
+PROCESS_QUERY_INFORMATION = 0x0400
 
+# closeEvent
 
 # 初始化程序整体
 class Initialization(QObject):
@@ -263,7 +273,7 @@ class Initialization(QObject):
                   'dsc_Typeface_size' : '15', # 桌面组件字体大小
                   'dsc_teacherfile_path' : 'None', # 教师文件夹路径 None为自动
                   'dsc_Color' : '#000000',
-                  'dsc_tran' : '0.8', # 桌面组件透明度
+                  'dsc_tran' : '50', # 桌面组件透明度
                   'dsc_halo_switch' : 'True', # 光环开关
                   'dsc_length' : 'None', # 桌面组件长度 None为自动
 
@@ -996,6 +1006,8 @@ class TransparentClock(QMainWindow):
         # 背景透明
         self.setAttribute(Qt.WA_TranslucentBackground)
         
+        self.allow_shutdown = False
+        
         # 窗口置顶
         if config['comboBox'] == "置顶":
             self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
@@ -1003,7 +1015,7 @@ class TransparentClock(QMainWindow):
         if config['Penetrate'] == 'True':
             self.setWindowFlags(self.windowFlags() | Qt.WindowTransparentForInput)
  
-
+        
         
         self.time_label = self.timer.findChild(QLabel, 'time_label')
         self.date_label = self.timer.findChild(QLabel, 'date_label')
@@ -1185,10 +1197,11 @@ class TransparentClock(QMainWindow):
         self.animation_hide.setEndValue(0)
         self.animation_hide.setEasingCurve(QEasingCurve.InQuad)
 
-    def closeEvent(self, event: QCloseEvent) -> None:
-        #event.accept()
-        if not is_system_shutting_down():
-            event.ignore()
+    """def closeEvent(self, event):
+        event.ignore()"""
+
+
+
 
 # 设置窗口
 class MainWindow(FluentWindow):
@@ -1841,9 +1854,6 @@ class MainWindow(FluentWindow):
         self.TableWidget.setBorderVisible(True)
         self.TableWidget.setBorderRadius(10)
         self.set_table_update()
-
-        # 连接单元格内容改变信号到table_update函数
-        self.TableWidget.itemChanged.connect(self.table_update)
         # 按钮
         self.Table_Button = self.classes.findChild(PushButton, 'Table_Button')
         self.Table_Button.clicked.connect(self.on_resize)
@@ -1859,61 +1869,67 @@ class MainWindow(FluentWindow):
         self.copy_Button.hide()
 
         self.up_Button = self.classes.findChild(PushButton, 'up_Button')
-        self.up_Button.hide()
+        self.up_Button.clicked.connect(self.set_table_update)
+        #self.up_Button.hide()
     def set_classes_time(self):
         #------设置时间线页面的控件--------
         self.TimeWidget = self.classes_time.findChild(ListWidget, 'ListWidget_time')
-        self.Time_Widget_update()
-        self.TimeWidget.itemClicked.connect(self.click_TimeWidget)
         self.name_edit = self.classes_time.findChild(TextEdit, 'name_edit')
-        self.name_edit.setPlaceholderText("请输入")
-        self.name_edit.hide()
         self.name_label = self.classes_time.findChild(BodyLabel, 'name_label')
-        self.name_label.hide()
         self.name_box = self.classes_time.findChild(ComboBox, 'name_box')
-        self.name_box.addItems(["上午","下午","晚上","自定义"])
-        self.name_box.currentIndexChanged.connect(self.name_box_changed)
         self.add_button = self.classes_time.findChild(PushButton, 'add_Button')
-        self.add_button.clicked.connect(self.add_aptime)
         self.TimePicker_from = self.classes_time.findChild(TimePicker, 'TimePicker_from')
         self.TimePicker_to = self.classes_time.findChild(TimePicker, 'TimePicker_to')
+        self.addtime_Button = self.classes_time.findChild(PrimaryPushButton, 'addtime_Button')
+        self.add_name_box = self.classes_time.findChild(ComboBox, 'add_name_box')
+        self.cancel_Button = self.classes_time.findChild(PushButton, 'cancel_Button')
+        self.del_Button = self.classes_time.findChild(PushButton, 'del_Button')
+        self.edit_label = self.classes_time.findChild(SubtitleLabel, 'edit_Label')
+        self.CardWidget4 = self.classes_time.findChild(CardWidget, 'CardWidget4')
+        self.ct_CardWidget2 = self.classes_time.findChild(CardWidget, 'CardWidget2')
+        self.edit_Button = self.classes_time.findChild(PushButton, 'edit_Button')
+        self.TimePicker_from_edit = self.classes_time.findChild(TimePicker, 'TimePicker_from_edit')
+        self.TimePicker_to_edit = self.classes_time.findChild(TimePicker, 'TimePicker_to_edit')
+        self.Counter_SwitchButton = self.classes_time.findChild(SwitchButton, 'Counter_SwitchButton')
+        self.week_ComboBox = self.classes_time.findChild(ComboBox, 'week_ComboBox')
+        self.auto_update_Button = self.classes_time.findChild(SwitchButton, 'auto_update_Button')
+
+
+
+        self.Time_Widget_update()
+        self.TimeWidget.itemClicked.connect(self.click_TimeWidget)        
+        self.name_edit.setPlaceholderText("请输入")
+        self.name_edit.hide()
+        self.name_label.hide()
+        self.name_box.addItems(["上午","下午","晚上","自定义"])
+        self.name_box.currentIndexChanged.connect(self.name_box_changed)
+        self.add_button.clicked.connect(self.add_aptime)
         self.from_time = ""
         self.to_time = ""
         self.add_name = "上午"
         self.TimePicker_from.timeChanged.connect(lambda t: setattr(self, 'from_time', t.toString()))
         self.TimePicker_to.timeChanged.connect(lambda t: setattr(self, 'to_time', t.toString()))
-        self.addtime_Button = self.classes_time.findChild(PrimaryPushButton, 'addtime_Button')
         self.addtime_Button.clicked.connect(self.add_time)
-        self.add_name_box = self.classes_time.findChild(ComboBox, 'add_name_box')
         self.add_name_box.addItems(self.ap_list)
         self.add_name_box.currentIndexChanged.connect(lambda: setattr(self, 'add_name', self.add_name_box.currentText()))
-        self.cancel_Button = self.classes_time.findChild(PushButton, 'cancel_Button')
         self.cancel_Button.clicked.connect(self.cancel_Widget)
-        self.del_Button = self.classes_time.findChild(PushButton, 'del_Button')
         self.del_Button.clicked.connect(self.del_Widget)
-        self.edit_label = self.classes_time.findChild(SubtitleLabel, 'edit_Label')
         self.edit_label.hide()
-        self.CardWidget4 = self.classes_time.findChild(CardWidget, 'CardWidget4')
         self.CardWidget4.hide()
-        # 连接itemSelectionChanged信号到槽函数
         self.TimeWidget.itemSelectionChanged.connect(self.update_widgets_visibility)
 
-        self.edit_Button = self.classes_time.findChild(PushButton, 'edit_Button')
         self.edit_Button.clicked.connect(self.edit_time)
-        self.TimePicker_from_edit = self.classes_time.findChild(TimePicker, 'TimePicker_from_edit')
-        self.TimePicker_to_edit = self.classes_time.findChild(TimePicker, 'TimePicker_to_edit')
         self.from_time_edit = ""
         self.to_time_edit = ""
-        #self.TimePicker_from_edit.timeChanged.connect(lambda t: setattr(self, 'from_time_edit', t.toString()))
-        #self.TimePicker_to_edit.timeChanged.connect(lambda t: setattr(self, 'to_time_edit', t.toString()))
 
-        self.Counter_SwitchButton = self.classes_time.findChild(SwitchButton, 'Counter_SwitchButton')
         self.Counter_SwitchButton.checkedChanged.connect(lambda value: self.click_Counter_Button(value))
         self.Counter_SwitchButton.setDisabled(True)
 
-        self.week_ComboBox = self.classes_time.findChild(ComboBox, 'week_ComboBox')
         self.week_ComboBox.addItems(['通用','周一','周二','周三','周四','周五','周六','周日'])
         self.week_ComboBox.currentIndexChanged.connect(self.week_changed)
+        self.auto_update_Button.setChecked(True)
+
+
     def set_duty(self):
         #------设置值日表页面的控件--------
         global duty_table
@@ -2123,8 +2139,12 @@ class MainWindow(FluentWindow):
         else:
             self.dsc_halo_button.setChecked(False)
 
+        try:
+            self.dsc_tran_Slider.setValue(int(config.get("dsc_tran")))
+        except:    
+            self.dsc_tran_Slider.setValue(50)
+            self.CH.handle_config("50",'dsc_tran')
 
-        self.dsc_tran_Slider.setValue(int(config.get("dsc_tran")))
         self.dsc_tran_BodyLabel.setText(config.get("dsc_tran"))  
         self.dsc_length_Slider.setMaximum(display_x)
         if config.get("dsc_length") == "None":
@@ -2133,7 +2153,8 @@ class MainWindow(FluentWindow):
         else:
             self.dsc_length_Slider.setValue(int(config.get("dsc_length")))
             self.dsc_length_BodyLabel.setText(config.get("dsc_length"))
-      
+        
+        
         
         self.dsc_lock_button.checkedChanged.connect(lambda value: self.CH.handle_config(str(value),'dsc_lock'))
         self.dsc_Switch_button.checkedChanged.connect(lambda value: self.CH.handle_config(str(value),'dsc_Switch'))
@@ -2236,9 +2257,6 @@ class MainWindow(FluentWindow):
             self.lot_del_button.hide()
         
         
-
-
-
     def update_dsc_order(self, new_order):
         global desk_short
         try:
@@ -2325,10 +2343,19 @@ class MainWindow(FluentWindow):
             self.updatesource_ComboBox.currentIndexChanged.connect(self.updatesource_callback)
 
             if tys == "update": # 有更新
-                wm = MessageBox("检测到新版本", "建议及时更新，以获取最新的改近以及新功能。", self)
-                wm.yesButton.setText("立即更新")
+                #wm = MessageBox("检测到新版本", "建议及时更新，以获取最新的改近以及新功能。", self)
+                self.down_im_ProgressBar.hide()
+                wm = MessageBox("检测到新版本", "目前暂时不可直接下载，请移步至官方下载网站进行下载新版本。辛苦啦~", self)
+                wm.yesButton.setText("打开")
                 wm.cancelButton.setText("暂不更新")
                 if wm.exec():
+                    #打开url
+
+                    webbrowser.open("https://www.yuque.com/yamikani/lingyun/yrlp9d1ob88b74z5")
+                    
+                    return
+
+
                     self.update_check.setDisabled(True)
                     if update_channel == None:
                         ws = MessageBox("警告", "下载地址获取失败，未作任何更改。可以尝试更换更新线路。你可以稍后再试或者进行反馈。", self)
@@ -2338,6 +2365,7 @@ class MainWindow(FluentWindow):
                         if ws.exec():
                             self.update_check.setEnabled(True)
                     else:
+                        print(f"开始下载更新程序，下载地址：{update_channel}")
                         save = tempfile.gettempdir() + "/LingYun/Temp.exe"
                         self.down_ElevatedCardWidget.show()
                         #self.download_ok(save,None)
@@ -2345,13 +2373,15 @@ class MainWindow(FluentWindow):
             #self.update_channel_ComboBox.currentIndexChanged.connect(self.update_channel_callback)
 
     def download_plan(self,bytes_downloaded, total_size, info_text):
+        #self.down_im_ProgressBar.hide()
+        #self.down_ProgressBar.show()
 
-        self.down_im_ProgressBar.hide()
-        self.down_ProgressBar.show()
 
         if total_size > 0:
+            
             progress = (bytes_downloaded / total_size) * 100
-            self.down_ProgressBar.setValue(int(progress))
+            print(progress)
+            #self.down_ProgressBar.setValue(int(progress))
 
             self.info_Label.setText(f"正在下载，请耐心等待 {info_text}")
             self.percent_Label.setText(f"{progress:.2f}%")
@@ -2422,6 +2452,13 @@ class MainWindow(FluentWindow):
         global class_weekday
         self.TimeWidget.clearSelection()
         class_weekday = self.week_ComboBox.currentText()
+        self.Counter_SwitchButton.setDisabled(True)
+        self.Counter_SwitchButton.setChecked(False)
+
+        if class_weekday != "通用":
+            self.ct_CardWidget2.hide()
+        else:
+            self.ct_CardWidget2.show()
         self.Time_Widget_update()
     def set_yun(self):
         #------设置集中控制页面的控件--------
@@ -3202,18 +3239,14 @@ class MainWindow(FluentWindow):
                     class_time[s][period][index] = time_period
                     break
 
-        
-        #for period in class_time:
-        #    if old_time_period in class_time[period]:
-        #        index = class_time[period].index(old_time_period)
-        #        class_time[period][index] = time_period
-        #        break
         main.saves_to_json()
-        #main.save_to_json(class_time, 'class_time.json')
         self.TimeWidget.clearSelection()
         self.Time_Widget_update()
         self.add_name_box.clear()
         self.add_name_box.addItems(self.ap_list)
+
+        if self.auto_update_Button.isChecked():
+            self.set_table_update()
     def del_Widget(self):
         if self.TimeWidget.currentItem() is None:
             self.error("请先选择一个时间段","警告",False,True)
@@ -3263,14 +3296,12 @@ class MainWindow(FluentWindow):
                         class_table[day_str] = [p for p in class_table[day_str] if p]
 
             main.saves_to_json()
-            #main.save_to_json(class_table, 'class_table.json')
-            
-            #main.save_to_json(class_time, 'class_time.json')
             self.TimeWidget.clearSelection()
             self.Time_Widget_update()
-            #self.set_table_update()
             self.add_name_box.clear()
             self.add_name_box.addItems(self.ap_list)
+            if self.auto_update_Button.isChecked():
+                self.set_table_update()
     def cancel_Widget(self):
         self.TimeWidget.clearSelection()
     def add_time(self):
@@ -3297,10 +3328,10 @@ class MainWindow(FluentWindow):
             class_time[ins][self.add_name].append(time_period)
 
         main.saves_to_json()
-        #main.save_to_json(class_table, 'class_table.json')
-        #main.save_to_json(class_time, 'class_time.json')
         self.Time_Widget_update()
-        #self.set_table_update()
+        if self.auto_update_Button.isChecked():
+            self.set_table_update()
+        
     def Time_Widget_update(self):
         self.TimeWidget.clear()
         self.ap_list = []
@@ -3331,24 +3362,18 @@ class MainWindow(FluentWindow):
         if name in self.ap_list:
             self.error("时间段已存在,请不要重复添加","警告",False,True)
             return
-        """self.ap_list.append(name)
-        item = QListWidgetItem(name)
-        item.setTextAlignment(Qt.AlignCenter)
-        self.TimeWidget.addItem(item)"""
         for ins in class_time:
             class_time[ins][name] = ["00:00-00:01"]
         for i in range(1,8):
             class_table[str(i)].append({name:['未设置']})
 
         main.saves_to_json()
-        #main.save_to_json(class_table, 'class_table.json')
-        #main.save_to_json(class_time, 'class_time.json')
         
         self.Time_Widget_update()
         self.add_name_box.clear()
         self.add_name_box.addItems(self.ap_list)
-
-        #self.set_table_update()
+        if self.auto_update_Button.isChecked():
+            self.set_table_update()
     def name_box_changed(self):
         index = self.name_box.currentIndex()
         if index == 3:
@@ -3365,7 +3390,14 @@ class MainWindow(FluentWindow):
             self.TableWidget.setColumnWidth(col+1, column_width)  # 设置每列宽度
         self.TableWidget.setColumnWidth(0, 120)  # 设置第一列宽度
         self.Table_Time.stop()
+
+
     def set_table_update(self,index=None):
+        try:
+            self.TableWidget.itemChanged.disconnect(self.table_update)
+        except:
+            pass
+        self.TableWidget.clear()
         if index != None:
             if index == 0:
                 done, ls = self.convert_table(class_table_a)
@@ -3382,8 +3414,6 @@ class MainWindow(FluentWindow):
         self.TableWidget.setRowCount(ls)
         self.TableWidget.setColumnCount(8)
         self.TableWidget.setHorizontalHeaderLabels(['时间','星期一','星期二','星期三','星期四','星期五','星期六','星期日'])
-        # 禁止用户修改列宽
-        #self.TableWidget.horizontalHeader().setSectionResizeMode(QHeaderView.Fixed)  # 设置列宽为固定
         for i in range(ls):
             item = QTableWidgetItem(self.widget_time[i])
             self.TableWidget.setItem(i, 0, item)
@@ -3393,6 +3423,13 @@ class MainWindow(FluentWindow):
                 item = QTableWidgetItem(Info[j])
                 self.TableWidget.setItem(i, j+1, item)
                 item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)# 设置单元格文本居中对齐
+        self.TableWidget.itemChanged.connect(self.table_update)
+        try:
+            self.up_Button.setText("成功!")
+            QTimer.singleShot(800, lambda: self.up_Button.setText("刷新课表"))
+        except:
+            pass
+
     def table_update(self, item=None):
         # 如果单元格对象为空
         if item is None:
@@ -3610,8 +3647,9 @@ class MainWindow(FluentWindow):
         self.CardWidget_xg.hide()
 
         self.yun_PasswordLineEdit.clear()
-        self.hide()
-        event.ignore()
+
+        '''self.hide()
+        event.ignore()'''
 
     def startup_program(self, zt, program_path=script_full_path, program_name="LingYun_Class_Widgets"):
         try:
@@ -4401,10 +4439,7 @@ class BlackScreen(QWidget):
             self.nested_window2.date_label.setStyleSheet(f'color: rgba({date_rgba[0]},{date_rgba[1]},{date_rgba[2]},{int(config.get("cl_Transparent"))});')
 
     def closeEvent(self, event: QCloseEvent) -> None:
-        if not is_system_shutting_down():
-            event.ignore()
-        else:
-            self.up_close()
+        self.up_close()
 
 
 # 主题色
@@ -5833,10 +5868,8 @@ class Desktop_Component(QWidget):
             else:
                 self.todayclass_background.setStyleSheet("background-color: rgba(0, 0, 0, 255);border-radius: 10px")
 
-    def closeEvent(self, event: QCloseEvent) -> None:
-        #event.accept()
-        if not is_system_shutting_down():
-            event.ignore()
+    """def closeEvent(self, event: QCloseEvent) -> None:
+        event.ignore()"""
 
     def warning(self,defs):
         if defs == "alert":
@@ -7094,6 +7127,32 @@ class AddNewExeDialog(QWidget):
         self.icon_path_input.clear()
         self.default_name.clear()
 
+# 单实例运行
+class SingleInstanceApp(QApplication):
+    def __init__(self, argv, unique_key):
+        super().__init__(argv)
+        self.unique_key = unique_key
+        self.shared_memory = QSharedMemory(unique_key)
+        self.is_single_instance = self.check_single_instance()
+        self.allow_shutdown = False
+
+    def check_single_instance(self):
+        """检查是否为单实例运行"""
+        # 尝试附加到已有的共享内存
+        if self.shared_memory.attach():
+            # 附加成功，说明已有实例在运行
+            return False
+        
+        # 尝试创建共享内存
+        if self.shared_memory.create(1):
+            # 创建成功，是第一个实例
+            return True
+        else:
+            # 创建失败，可能是权限问题或其他错误
+            return False
+        
+
+
 
 # 云获取提醒
 '''class Yun_warn(QWidget):
@@ -7183,7 +7242,9 @@ def restart_program():
     clock.animation_hide.start()
     DP_Comonent.animation_rect_hide.start()
     
-    if is_frozen():
+
+
+    '''if is_frozen():
         # 打包环境,executable是当前可执行文件的路径
         executable = os.path.abspath(sys.argv[0])     
         args = [executable] + sys.argv[1:]
@@ -7193,6 +7254,7 @@ def restart_program():
         executable = sys.executable
         script_path = os.path.abspath(sys.argv[0])
         args = [executable, script_path] + sys.argv[1:]
+    
 
     def perform_restart():
         if is_frozen():
@@ -7202,26 +7264,15 @@ def restart_program():
         else:
             # 开发环境
             os.execl(executable, *args)
-    
+    '''
+    def perform_restart():
+        executable = sys.executable
+        script_path = os.path.abspath(sys.argv[0])
+        args = [executable, script_path] + sys.argv[1:]
+        os.execl(executable, *args)
+
     # 给动画足够的时间完成
     QTimer.singleShot(500, perform_restart)
-
-# 检查多开（暂时不用）
-def is_program_running():
-    pid_file = '/tmp/LingYun.pid'
-    if os.path.isfile(pid_file):
-        with open(pid_file, 'r') as f:
-            pid = int(f.read())
-        try:
-            os.kill(pid, 0)  # 检查进程是否存在
-            return True
-        except OSError:
-            os.remove(pid_file)
-            return False
-    else:
-        with open(pid_file, 'w') as f:
-            f.write(str(os.getpid()))
-        return False
 
 def check_component_in_ui(ui_file_path, component_name):
     """检查UI文件中是否存在特定名称的组件
@@ -7295,6 +7346,7 @@ def extract_icon_with_key(file_path, icon_index, output_path):
 
 
 if __name__ == '__main__':
+
     # 适配高DPI缩放
     QApplication.setHighDpiScaleFactorRoundingPolicy(Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
     QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
@@ -7306,8 +7358,17 @@ if __name__ == '__main__':
     CLSCTX_REMOTE_SERVER = 0x10
     CLSCTX_SERVER = CLSCTX_INPROC_SERVER | CLSCTX_LOCAL_SERVER | CLSCTX_REMOTE_SERVER
     CLSCTX_ALL = CLSCTX_INPROC_HANDLER | CLSCTX_SERVER
-    app = QApplication(sys.argv)
+    #app = QApplication(sys.argv)
+    app = SingleInstanceApp(sys.argv, UNIQUE_KEY)
 
+
+    if not app.is_single_instance:
+        # 弹出提示对话框
+        QMessageBox.critical(None, "凌云班级组件正在运行", "提示：该程序已在运行中，请不要重复启动")
+        sys.exit(1)
+        
+    app.setQuitOnLastWindowClosed(False)
+    
     arg = get_argument()
     '''
     if arg and arg[0] == "/update":
@@ -7326,6 +7387,8 @@ if __name__ == '__main__':
         main.init()
     sys.excepthook = main.handle_exception
     
+
+
     # 处理/clean参数
     if arg and arg[0] == "/clean":
         QTimer.singleShot(3000, lambda: shutil.rmtree(tempfile.gettempdir() + "/LingYun"))

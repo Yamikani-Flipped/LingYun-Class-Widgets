@@ -16,7 +16,7 @@ from ctypes import wintypes, Structure, POINTER, c_ulonglong, c_uint, c_int
 
 HRESULT = ctypes.c_long
 
-# save_shortcut_order
+# closeEvent
 warnings.filterwarnings("ignore", category=DeprecationWarning) # 忽略警告
 windll = ctypes.windll.LoadLibrary("shell32.dll")
 
@@ -851,7 +851,11 @@ class ShortcutManager(QWidget):
     def __init__(self, initial_params=None, parent=None):
         super().__init__(parent)
         self.is_expanded = True
-        self.opacity = float(read_from_registry("dsc_tran")) / 100
+        try:
+            self.opacity = float(read_from_registry("dsc_tran")) / 100
+        except:
+            self.opacity = 0.5
+            write_to_registry("dsc_tran", "50")
         self.shortcuts = []  # 存储所有快捷方式
 
         hex_color = read_from_registry("dsc_Color").lstrip('#')
@@ -1252,7 +1256,6 @@ class ShortcutManager(QWidget):
         screen_height = screen_geometry.height()
         
         # 默认宽度为屏幕一半
-
         width = self.read_from_registry('dsc_length')
         if width == "None":
             width = int(screen_width * self.DEFAULT_WIDTH_RATIO)  
@@ -1264,10 +1267,13 @@ class ShortcutManager(QWidget):
         x = int(self.read_from_registry('dsc_x'))
         y = int(self.read_from_registry('dsc_y'))
 
+
         # 设置位置（底部居中）
-        if x is None or y is None or x < 0 or y < 0:
+        if x is None or y is None or x <= 0 or y <= 0:
             x = (screen_width - width) // 2
             y = screen_height - height - 20
+            write_to_registry('dsc_x', str(x))
+            write_to_registry('dsc_y', str(y))
         
         self.setGeometry(x, y, width, height)
         self.original_geometry = self.geometry()
@@ -2192,6 +2198,10 @@ class ShortcutManager(QWidget):
             self.toggle_btn.setEnabled(False)  # 禁用时暂停按钮失效
             self.style_btn.setEnabled(False)   # 禁用时样式按钮失效
         self.update()  # 触发重绘（隐藏光环）
+
+    def closeEvent(self, a0):
+        # 防止意外关闭
+        a0.ignore()
 
 class RotatableSvgButton(QPushButton):
     """带SVG旋转动画的按钮（修复初始大小问题）"""
@@ -3303,6 +3313,22 @@ def read_from_registry(value_name):
     except Exception as e:
         QMessageBox.critical(None, '错误', f'读取注册表失败：{e}')
         return None
+
+def write_to_registry(value_name, value_data):
+    try:
+        # 尝试创建或打开注册表键
+        registry_key = reg.CreateKey(reg.HKEY_CURRENT_USER, r'SOFTWARE\LingYunTimes')
+        # 设置值
+        reg.SetValueEx(registry_key, value_name, 0, reg.REG_SZ, value_data)
+        # 如果需要，可以在这里添加成功消息
+    except Exception as e:
+        QMessageBox.critical(None, '错误', f'写入注册表失败：{e}')
+    finally:
+        # 关闭注册表键
+        if 'registry_key' in locals():
+            reg.CloseKey(registry_key)
+
+
 
 def save_shortcut_order(shortcuts):
     """保存快捷方式顺序到配置文件，支持分割线、UWP应用和系统快捷方式"""

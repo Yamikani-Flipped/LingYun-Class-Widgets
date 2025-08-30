@@ -4,7 +4,7 @@ from PyQt5.QtCore import Qt, QTimer, QEasingCurve, pyqtProperty
 from PyQt5.QtGui import QPainter, QColor, QBrush, QLinearGradient
 from PyQt5.QtCore import QPropertyAnimation, QEasingCurve,QParallelAnimationGroup,QRectF
 
-
+# closeEvent
 class WaveAnimation(QWidget):
     def __init__(self, color="#3498db", duration=1500, start_delay=0, parent=None):
         # 确保QApplication实例存在
