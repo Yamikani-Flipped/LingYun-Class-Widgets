@@ -708,11 +708,106 @@ ComboBox[isPlaceholderText=true] {
             </widget>
            </item>
            <item>
+            <widget class="CardWidget" name="CardWidget3_2">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>70</height>
+              </size>
+             </property>
+             <layout class="QHBoxLayout" name="horizontalLayout_9">
+              <property name="leftMargin">
+               <number>15</number>
+              </property>
+              <property name="topMargin">
+               <number>15</number>
+              </property>
+              <property name="rightMargin">
+               <number>15</number>
+              </property>
+              <property name="bottomMargin">
+               <number>15</number>
+              </property>
+              <item>
+               <layout class="QVBoxLayout" name="verticalLayout_32">
+                <property name="spacing">
+                 <number>0</number>
+                </property>
+                <item>
+                 <widget class="StrongBodyLabel" name="CW4_label_13">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="text">
+                   <string>自动更新课表</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="CaptionLabel" name="CW4_label_14">
+                  <property name="text">
+                   <string>如果修改出现卡顿，可以尝试关闭</string>
+                  </property>
+                  <property name="wordWrap">
+                   <bool>true</bool>
+                  </property>
+                  <property name="lightColor" stdset="0">
+                   <color alpha="150">
+                    <red>0</red>
+                    <green>0</green>
+                    <blue>0</blue>
+                   </color>
+                  </property>
+                  <property name="darkColor" stdset="0">
+                   <color alpha="200">
+                    <red>255</red>
+                    <green>255</green>
+                    <blue>255</blue>
+                   </color>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_5">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
+               <widget class="SwitchButton" name="auto_update_Button">
+                <property name="enabled">
+                 <bool>true</bool>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+                <property name="onText">
+                 <string>开</string>
+                </property>
+                <property name="offText">
+                 <string>关</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
             <widget class="BodyLabel" name="BodyLabel">
              <property name="text">
-              <string>提示：当您完成了对时间线的编辑时，应重启本软件以让课表全局同步，然后你可以继续编辑课表。如果你需要对已经现有的时间进行修改，请先选择需要修改的时间段。
-
-注意：如果你要删除时间线，那么如果给一个星期中单独某天进行特别定义过，那么在删除时不会删除你特别定义的时间线，你还需要删除特别定义的时间线（删除的判断方法是需要删除的时间线和现有的时间线进行判断，如果相同，那么删除）后续可能会进行优化。</string>
+              <string>注意：如果你要删除时间线，那么如果给一个星期中单独某天进行特别定义过，那么在删除时不会删除你特别定义的时间线，你还需要删除特别定义的时间线（删除的判断方法是需要删除的时间线和现有的时间线进行判断，如果相同，那么删除）后续可能会进行优化。</string>
              </property>
              <property name="textFormat">
               <enum>Qt::PlainText</enum>

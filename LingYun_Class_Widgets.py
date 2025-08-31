@@ -8,10 +8,10 @@ import shutil,zipfile,tempfile
 import download_ly, LNC# ,install_ly
 from WaveAnimation import WaveAnimation
 from Version_ly import version
-from lottery import FloatWindow,load_student_list,save_student_list
+
 from Sortable import HorizontalSortWidget
 from config_handler import ConfigHandler
-from Desktop_shortcut_component import ShortcutManager
+
 import xml.etree.ElementTree as ET
 from functools import partial
 
@@ -37,30 +37,35 @@ from PyQt5.QtWidgets import QLabel, QWidget,QMainWindow, QScroller, QHBoxLayout,
 
 import ast
 from win10toast import ToastNotifier
-#from pathlib import Path
 from ctypes import byref, windll, c_ulong, c_bool, POINTER ,wintypes,create_unicode_buffer
 import subprocess
-
-
-
-warnings.filterwarnings("ignore", category=DeprecationWarning) # 忽略警告
-Version = '1.6.15'
-Version_Parse = version(Version)
-# 1.6.6以上版本修改为配置文件存电脑文档文件夹中
-#USER_RES = str(Path(__file__).resolve().parent.parent / "Resource").replace('\\', '/') + "/"
-def getDocPath(pathID=5):
-    '''path=5: My Documents'''
-    buf= create_unicode_buffer(wintypes.MAX_PATH)
-    windll.shell32.SHGetFolderPathW(None, pathID, None, 0, buf)
-    return buf.value
-USER_RES = getDocPath() + "/LingYun_Profile/"
-UNIQUE_KEY = "lingyun.studio.lingyunclasswidgets.singleinstance"
-RES = "Resource/"
 
 # 获取当前完整路径,获取当前文件名（os.path.basename(sys.argv[0]获得的是exe名字）
 script_dir = sys.argv[0].replace(os.path.basename(sys.argv[0]),"")
 script_full_path = sys.argv[0]
 os.chdir(script_dir)# 切换工作目录QPropertyAnimation
+
+warnings.filterwarnings("ignore", category=DeprecationWarning) # 忽略警告
+Version = '1.6.17'
+Version_Parse = version(Version)
+
+def getDocPath(pathID=5):
+    '''path=5: My Documents'''
+    buf= create_unicode_buffer(wintypes.MAX_PATH)
+    windll.shell32.SHGetFolderPathW(None, pathID, None, 0, buf)
+    return buf.value
+USER_RES = getDocPath() + "\\LingYun_Profile\\"  # 1.6.6以上版本修改为配置文件存电脑文档文件夹中
+UNIQUE_KEY = "lingyun.studio.lingyunclasswidgets.singleinstance"
+RES = os.path.join(script_dir,"Resource/")
+
+
+if not os.path.isdir(USER_RES):
+    #QMessageBox.critical(None, "警告", "用户资源文件夹不存在或损坏！即将使用默认资源。")
+    os.makedirs(USER_RES, exist_ok=True)
+    shutil.copytree("LingYun_Profile", USER_RES, dirs_exist_ok=True)
+if not os.path.isdir(USER_RES + "audio"):
+    shutil.copytree("LingYun_Profile\\audio", USER_RES+"audio", dirs_exist_ok=True)
+
 
 WM_QUERYENDSESSION = 0x0011
 WM_ENDSESSION = 0x0016
@@ -69,6 +74,9 @@ TOKEN_ADJUST_PRIVILEGES = 0x0020
 TOKEN_QUERY = 0x0008
 SE_PRIVILEGE_ENABLED = 0x0002
 PROCESS_QUERY_INFORMATION = 0x0400
+
+from lottery import FloatWindow,load_student_list,save_student_list
+from Desktop_shortcut_component import ShortcutManager
 
 # closeEvent
 
@@ -168,7 +176,7 @@ class Initialization(QObject):
 
 
         # 默认课程表和时间
-        default_class = [["07:20-08:00","07:20-07:50"],{"1":[{"上午":["","","",""]},{"下午":["","","",""]},{"晚上":[""]}],"2":[{"上午":["","","",""]},{"下午":["","","",""]},{"晚上":[""]}],"3":[{"上午":["","","",""]},{"下午":["","","",""]},{"晚上":[""]}],"4":[{"上午":["","","",""]},{"下午":["","","",""]},{"晚上":[""]}],"5":[{"上午":["","","",""]},{"下午":["","","",""]},{"晚上":[""]}],"6":[{"上午":["","","",""]},{"下午":["","","",""]},{"晚上":[""]}],"7":[{"上午":["","","",""]},{"下午":["","","",""]},{"晚上":[""]}]},{"1":[{"上午":["","","",""]},{"下午":["","","",""]},{"晚上":[""]}],"2":[{"上午":["","","",""]},{"下午":["","","",""]},{"晚上":[""]}],"3":[{"上午":["","","",""]},{"下午":["","","",""]},{"晚上":[""]}],"4":[{"上午":["","","",""]},{"下午":["","","",""]},{"晚上":[""]}],"5":[{"上午":["","","",""]},{"下午":["","","",""]},{"晚上":[""]}],"6":[{"上午":["","","",""]},{"下午":["","","",""]},{"晚上":[""]}],"7":[{"上午":["","","",""]},{"下午":["","","",""]},{"晚上":[""]}]},{"default":{"上午":["08:00-08:45","08:55-09:40","10:10-10:55","11:10-11:50"],"下午":["14:10-14:50","15:05-15:45","15:55-16:35","16:45-17:25"],"晚上":["18:30-20:30"]},"1":{"上午":["08:00-08:45","08:55-09:40","10:10-10:55","11:10-11:50"],"下午":["14:10-14:50","15:05-15:45","15:55-16:35","16:45-17:25"],"晚上":["18:30-20:30"]},"2":{"上午":["08:00-08:45","08:55-09:40","10:10-10:55","11:10-11:50"],"下午":["14:10-14:50","15:05-15:45","15:55-16:35","16:45-17:25"],"晚上":["18:30-20:30"]},"3":{"上午":["08:00-08:45","08:55-09:40","10:10-10:55","11:10-11:50"],"下午":["14:10-14:50","15:05-15:45","15:55-16:35","16:45-17:25"],"晚上":["18:30-20:30"]},"4":{"上午":["08:00-08:45","08:55-09:40","10:10-10:55","11:10-11:50"],"下午":["14:10-14:50","15:05-15:45","15:55-16:35","16:45-17:25"],"晚上":["18:30-20:30"]},"5":{"上午":["08:00-08:45","08:55-09:40","10:10-10:55","11:10-11:50"],"下午":["14:10-14:50","15:05-15:45","15:55-16:35","16:45-17:25"],"晚上":["18:30-20:30"]},"6":{"上午":["08:00-08:45","08:55-09:40","10:10-10:55","11:10-11:50"],"下午":["14:10-14:50","15:05-15:45","15:55-16:35","16:45-17:25"],"晚上":["18:30-20:30"]},"7":{"上午":["07:50-08:35","08:45-09:30","09:50-10:35","10:45-11:30"],"下午":["14:10-14:50","15:05-15:45","15:55-16:35","16:45-17:25"],"晚上":["18:30-20:30"]}},{"default":{"上午":["08:00-08:45","08:55-09:40","10:10-10:55","11:10-11:50"],"下午":["14:10-14:50","15:05-15:45","15:55-16:35","16:45-17:25"],"晚上":["18:30-20:30"]},"1":{"上午":["08:00-08:45","08:55-09:40","10:10-10:55","11:10-11:50"],"下午":["14:10-14:50","15:05-15:45","15:55-16:35","16:45-17:25"],"晚上":["18:30-20:30"]},"2":{"上午":["08:00-08:45","08:55-09:40","10:10-10:55","11:10-11:50"],"下午":["14:10-14:50","15:05-15:45","15:55-16:35","16:45-17:25"],"晚上":["18:30-20:30"]},"3":{"上午":["08:00-08:45","08:55-09:40","10:10-10:55","11:10-11:50"],"下午":["14:10-14:50","15:05-15:45","15:55-16:35","16:45-17:25"],"晚上":["18:30-20:30"]},"4":{"上午":["08:00-08:45","08:55-09:40","10:10-10:55","11:10-11:50"],"下午":["14:10-14:50","15:05-15:45","15:55-16:35","16:45-17:25"],"晚上":["18:30-20:30"]},"5":{"上午":["08:00-08:45","08:55-09:40","10:10-10:55","11:10-11:50"],"下午":["14:10-14:50","15:05-15:45","15:55-16:35","16:45-17:25"],"晚上":["18:30-20:30"]},"6":{"上午":["08:00-08:45","08:55-09:40","10:10-10:55","11:10-11:50"],"下午":["14:10-14:50","15:05-15:45","15:55-16:35","16:45-17:25"],"晚上":["18:30-20:30"]},"7":{"上午":["07:50-08:35","08:45-09:30","09:50-10:35","10:45-11:30"],"下午":["14:10-14:50","15:05-15:45","15:55-16:35","16:45-17:25"],"晚上":["18:30-20:30"]}},{"1":{"擦黑板":[""],"倒垃圾":[""],"班级扫地":["",""],"班级拖地":["",""],"走廊打扫":[""],"包干区":["",""]},"2":{"擦黑板":[""],"倒垃圾":[""],"班级扫地":["",""],"班级拖地":["",""],"走廊打扫":[""],"包干区":["",""]},"3":{"擦黑板":[""],"倒垃圾":[""],"班级扫地":["",""],"班级拖地":["",""],"走廊打扫":[""],"包干区":["",""]},"4":{"擦黑板":[""],"倒垃圾":[""],"班级扫地":["",""],"班级拖地":["",""],"走廊打扫":[""],"包干区":["",""]},"5":{"擦黑板":[""],"倒垃圾":[""],"班级扫地":["",""],"班级拖地":["",""],"走廊打扫":[""],"包干区":["",""]},"6":{"擦黑板":[""],"倒垃圾":[""],"班级扫地":["",""],"班级拖地":["",""],"走廊打扫":[""],"包干区":["",""]},"7":{"擦黑板":[""],"倒垃圾":[""],"班级扫地":["",""],"班级拖地":["",""],"走廊打扫":[""],"包干区":["",""]}}]
+        default_class = [[],{"1":[{"上午":["","","",""]},{"下午":["","","",""]},{"晚上":[""]}],"2":[{"上午":["","","",""]},{"下午":["","","",""]},{"晚上":[""]}],"3":[{"上午":["","","",""]},{"下午":["","","",""]},{"晚上":[""]}],"4":[{"上午":["","","",""]},{"下午":["","","",""]},{"晚上":[""]}],"5":[{"上午":["","","",""]},{"下午":["","","",""]},{"晚上":[""]}],"6":[{"上午":["","","",""]},{"下午":["","","",""]},{"晚上":[""]}],"7":[{"上午":["","","",""]},{"下午":["","","",""]},{"晚上":[""]}]},{"1":[{"上午":["","","",""]},{"下午":["","","",""]},{"晚上":[""]}],"2":[{"上午":["","","",""]},{"下午":["","","",""]},{"晚上":[""]}],"3":[{"上午":["","","",""]},{"下午":["","","",""]},{"晚上":[""]}],"4":[{"上午":["","","",""]},{"下午":["","","",""]},{"晚上":[""]}],"5":[{"上午":["","","",""]},{"下午":["","","",""]},{"晚上":[""]}],"6":[{"上午":["","","",""]},{"下午":["","","",""]},{"晚上":[""]}],"7":[{"上午":["","","",""]},{"下午":["","","",""]},{"晚上":[""]}]},{"default":{"上午":["08:00-08:45","08:55-09:40","10:10-10:55","11:10-11:50"],"下午":["14:10-14:50","15:05-15:45","15:55-16:35","16:45-17:25"],"晚上":["18:30-20:30"]},"1":{"上午":["08:00-08:45","08:55-09:40","10:10-10:55","11:10-11:50"],"下午":["14:10-14:50","15:05-15:45","15:55-16:35","16:45-17:25"],"晚上":["18:30-20:30"]},"2":{"上午":["08:00-08:45","08:55-09:40","10:10-10:55","11:10-11:50"],"下午":["14:10-14:50","15:05-15:45","15:55-16:35","16:45-17:25"],"晚上":["18:30-20:30"]},"3":{"上午":["08:00-08:45","08:55-09:40","10:10-10:55","11:10-11:50"],"下午":["14:10-14:50","15:05-15:45","15:55-16:35","16:45-17:25"],"晚上":["18:30-20:30"]},"4":{"上午":["08:00-08:45","08:55-09:40","10:10-10:55","11:10-11:50"],"下午":["14:10-14:50","15:05-15:45","15:55-16:35","16:45-17:25"],"晚上":["18:30-20:30"]},"5":{"上午":["08:00-08:45","08:55-09:40","10:10-10:55","11:10-11:50"],"下午":["14:10-14:50","15:05-15:45","15:55-16:35","16:45-17:25"],"晚上":["18:30-20:30"]},"6":{"上午":["08:00-08:45","08:55-09:40","10:10-10:55","11:10-11:50"],"下午":["14:10-14:50","15:05-15:45","15:55-16:35","16:45-17:25"],"晚上":["18:30-20:30"]},"7":{"上午":["08:00-08:45","08:55-09:40","10:10-10:55","11:10-11:50"],"下午":["14:10-14:50","15:05-15:45","15:55-16:35","16:45-17:25"],"晚上":["18:30-20:30"]}},{"default":{"上午":["08:00-08:45","08:55-09:40","10:10-10:55","11:10-11:50"],"下午":["14:10-14:50","15:05-15:45","15:55-16:35","16:45-17:25"],"晚上":["18:30-20:30"]},"1":{"上午":["08:00-08:45","08:55-09:40","10:10-10:55","11:10-11:50"],"下午":["14:10-14:50","15:05-15:45","15:55-16:35","16:45-17:25"],"晚上":["18:30-20:30"]},"2":{"上午":["08:00-08:45","08:55-09:40","10:10-10:55","11:10-11:50"],"下午":["14:10-14:50","15:05-15:45","15:55-16:35","16:45-17:25"],"晚上":["18:30-20:30"]},"3":{"上午":["08:00-08:45","08:55-09:40","10:10-10:55","11:10-11:50"],"下午":["14:10-14:50","15:05-15:45","15:55-16:35","16:45-17:25"],"晚上":["18:30-20:30"]},"4":{"上午":["08:00-08:45","08:55-09:40","10:10-10:55","11:10-11:50"],"下午":["14:10-14:50","15:05-15:45","15:55-16:35","16:45-17:25"],"晚上":["18:30-20:30"]},"5":{"上午":["08:00-08:45","08:55-09:40","10:10-10:55","11:10-11:50"],"下午":["14:10-14:50","15:05-15:45","15:55-16:35","16:45-17:25"],"晚上":["18:30-20:30"]},"6":{"上午":["08:00-08:45","08:55-09:40","10:10-10:55","11:10-11:50"],"下午":["14:10-14:50","15:05-15:45","15:55-16:35","16:45-17:25"],"晚上":["18:30-20:30"]},"7":{"上午":["08:00-08:45","08:55-09:40","10:10-10:55","11:10-11:50"],"下午":["14:10-14:50","15:05-15:45","15:55-16:35","16:45-17:25"],"晚上":["18:30-20:30"]}},{"1":{"擦黑板":[""],"倒垃圾":[""],"班级扫地":["",""],"班级拖地":["",""],"走廊打扫":[""],"包干区":["",""]},"2":{"擦黑板":[""],"倒垃圾":[""],"班级扫地":["",""],"班级拖地":["",""],"走廊打扫":[""],"包干区":["",""]},"3":{"擦黑板":[""],"倒垃圾":[""],"班级扫地":["",""],"班级拖地":["",""],"走廊打扫":[""],"包干区":["",""]},"4":{"擦黑板":[""],"倒垃圾":[""],"班级扫地":["",""],"班级拖地":["",""],"走廊打扫":[""],"包干区":["",""]},"5":{"擦黑板":[""],"倒垃圾":[""],"班级扫地":["",""],"班级拖地":["",""],"走廊打扫":[""],"包干区":["",""]},"6":{"擦黑板":[""],"倒垃圾":[""],"班级扫地":["",""],"班级拖地":["",""],"走廊打扫":[""],"包干区":["",""]},"7":{"擦黑板":[""],"倒垃圾":[""],"班级扫地":["",""],"班级拖地":["",""],"走廊打扫":[""],"包干区":["",""]}}]
         class_weekday = "通用"
         class_dan = ""
 
@@ -3625,8 +3633,10 @@ class MainWindow(FluentWindow):
                 w.yesButton.setText("重启软件")
                 w.cancelButton.setText("忽略")
                 if w.exec():
-                    self.close()
-                    restart_program()
+                    #self.close()
+
+                    QTimer.singleShot(100, lambda: restart_program())
+                    
                     #theme_manager.themeListener.terminate()
                     #theme_manager.themeListener.deleteLater()
                     #QApplication.quit()
@@ -5956,7 +5966,7 @@ class Desktop_Component(QWidget):
 
     def minute_level_update(self):
         """分钟级更新 - 处理课程切换、数据刷新等低频操作"""
-        print(f"[{datetime.now().strftime('%H:%M:%S')}] 执行分钟级更新")
+        #print(f"[{datetime.now().strftime('%H:%M:%S')}] 执行分钟级更新")
         # 检查是否需要刷新数据（如课程是否已切换）
         self.refresh_all_data(update_ui=True)
         # 仅在必要时更新倒计时（如课程信息变化）
@@ -6082,7 +6092,8 @@ class Desktop_Component(QWidget):
         self.today_classes_ord = []
         
         week = str(datetime.now().isoweekday()) if adj_weekday == 0 else str(adj_weekday)
-        week = "0" if week == "7" else week  # 处理周日
+        week = "7" if week == "0" else week  # 处理周日
+
         
         courses = class_table.get(week, [])
         for course_block in courses:
@@ -6101,7 +6112,6 @@ class Desktop_Component(QWidget):
                         self.today_classes.append(cls)
                         self.today_classes_ord.append(f"第{section_counter}节")
                         section_counter += 1
-
         # 格式化显示文本
         self.class_text = ""
         self.class_ord_text = ""
@@ -6111,6 +6121,7 @@ class Desktop_Component(QWidget):
             if len(cls) > 0:
                 self.class_text += cls + "\n"
                 self.class_ord_text += ords + "\n"
+
 
     def calculate_tomorrow_classes(self):
         """计算明日课程并缓存"""
@@ -6198,11 +6209,11 @@ class Desktop_Component(QWidget):
 
     def update_Widgets(self, cho=None):
         """更新课程表显示（使用缓存数据）"""
+
         if cho is not None:
             a = main.convert_widget(-1)
             if a == "close":
                 return
-
         # 使用缓存的数据更新UI
         if self.dp_info == {} or self.dp_info["tom"] != 'True':
             if not self.today_classes:
@@ -6581,10 +6592,12 @@ class WavWorker(QObject):
                 volume = interface.QueryInterface(IAudioEndpointVolume)
                 # 获取当前音量值
                 original_volume = volume.GetMasterVolumeLevelScalar()
+                print(f"当前音量: {original_volume}")
                 # 检查当前静音状态
                 was_muted = volume.GetMute()
                 volume.SetMute(False, None)
                 vs = float(int(self.volume_value) / 100)
+                print(f"设置音量为: {vs}")
                 volume.SetMasterVolumeLevelScalar(vs, None)
             
             # 播放音频
@@ -6600,6 +6613,7 @@ class WavWorker(QObject):
                 try:
                     volume.SetMasterVolumeLevelScalar(original_volume, None)
                     volume.SetMute(bool(was_muted), None)
+                    print(f"恢复音量设置为: {original_volume}")
                 except Exception as e:
                     print(f"恢复音量设置错误: {str(e)}")
             
@@ -6638,19 +6652,19 @@ class class_warn(QWidget):
         if types == "up":
             self.label.setText("下课")
             self.warn_background.setStyleSheet(f"background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:1, y2:0, stop:0 rgba({tcolor[1]}, {tcolor[2]}, {tcolor[3]}, 255), stop:1 rgba({tcolor[4]}, {tcolor[5]}, {tcolor[6]}, 255))")
-            self.finish_wav = f'{USER_RES}audio/up.wav'
+            self.finish_wav = f'{USER_RES}audio\\up.wav'
         elif types == "down":
             self.label.setText("上课")
             self.warn_background.setStyleSheet(f"background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:1, y2:0, stop:0 rgba({tcolor[1]}, {tcolor[2]}, {tcolor[3]}, 255), stop:1 rgba({tcolor[4]}, {tcolor[5]}, {tcolor[6]}, 255))")
-            self.finish_wav = f'{USER_RES}audio/down.wav'
+            self.finish_wav = f'{USER_RES}audio\\down.wav'
         elif types == "next_down":
             self.label.setText("即将上课")
             self.warn_background.setStyleSheet(f"background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:1, y2:0, stop:0 rgba({tcolor[1]}, {tcolor[2]}, {tcolor[3]}, 255), stop:1 rgba({tcolor[4]}, {tcolor[5]}, {tcolor[6]}, 255))")
-            self.finish_wav = f'{USER_RES}audio/next_down.wav'
+            self.finish_wav = f'{USER_RES}audio\\next_down.wav'
         elif types == "ls":
             self.label.setText("放学")
             self.warn_background.setStyleSheet(f"background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:1, y2:0, stop:0 rgba({tcolor[1]}, {tcolor[2]}, {tcolor[3]}, 255), stop:1 rgba({tcolor[4]}, {tcolor[5]}, {tcolor[6]}, 255))")
-            self.finish_wav = f'{USER_RES}audio/up.wav' 
+            self.finish_wav = f'{USER_RES}audio\\up.wav' 
 
         wave.start(tcolor[0])    
         wave.show()
@@ -7378,13 +7392,7 @@ if __name__ == '__main__':
     else:
     '''
     main = Initialization()
-    if os.path.exists(USER_RES) and os.path.isdir(USER_RES):
-        main.init()
-    else:
-        #QMessageBox.critical(None, "警告", "用户资源文件夹不存在或损坏！即将使用默认资源。")
-        os.makedirs(USER_RES, exist_ok=True)
-        shutil.copytree("LingYun_Profile", USER_RES, dirs_exist_ok=True)
-        main.init()
+    main.init()
     sys.excepthook = main.handle_exception
     
 

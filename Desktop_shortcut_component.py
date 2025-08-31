@@ -35,6 +35,7 @@ SYSTEM_ICON_PATH = os.path.join("Resource", "System_Icons")
 # 确保基础文件夹存在
 os.makedirs(TEACHER_FILES, exist_ok=True)
 
+
 # 默认九大学科
 SUBJECTS = [
     "语文", "数学", "英语",
